@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/layout :: head('ลูกค้า')}"></head>
+  <body>
+    <aside th:replace="~{fragments/layout :: sidebar('customers')}"></aside>
+    <div th:replace="~{fragments/layout :: overlay}"></div>
+    <div class="app-shell">
+      <header th:replace="~{fragments/layout :: topbar}"></header>
+      <main class="app-content">
+        <div th:replace="~{fragments/layout :: flash}"></div>
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">ลูกค้า</h1>
+            <p class="page-subtitle">จัดการรายชื่อลูกค้าทั้งหมดในระบบ</p>
+          </div>
+          <button
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#customerModal"
+          >
+            <i class="bi bi-plus-lg me-2"></i>เพิ่มลูกค้า
+          </button>
+        </div>
+        <form class="card filter-bar">
+          <div class="input-group">
+            <span class="input-group-text bg-transparent"
+              ><i class="bi bi-search"></i></span
+            ><input
+              class="form-control"
+              name="q"
+              th:value="${q}"
+              placeholder="ค้นหาชื่อบริษัท ชื่อผู้ติดต่อ เบอร์โทร หรือไลน์"
+            /><button class="btn btn-outline-primary">ค้นหา</button>
+          </div>
+        </form>
+        <section class="card">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>รหัสลูกค้า</th>
+                  <th>ชื่อ</th>
+                  <th>บริษัท</th>
+                  <th>เบอร์โทร</th>
+                  <th>ไลน์</th>
+                  <th>ประเภท</th>
+                  <th>สถานะ</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="c:${customers.content}">
+                  <td>
+                    <a
+                      class="fw-bold"
+                      th:href="@{/customers/{id}(id=${c.id})}"
+                      th:text="${c.customerCode}"
+                    ></a>
+                  </td>
+                  <td th:text="${c.name}"></td>
+                  <td th:text="${c.companyName ?: '-'}"></td>
+                  <td th:text="${c.primaryPhone}"></td>
+                  <td th:text="${c.lineId ?: '-'}"></td>
+                  <td
+                    th:text="${c.customerType.name()=='BUSINESS'?'นิติบุคคล':'บุคคลทั่วไป'}"
+                  ></td>
+                  <td>
+                    <span
+                      class="status-badge"
+                      th:classappend="'status-'+${c.status}"
+                      th:text="${statusLabels[c.status]}"
+                    ></span>
+                  </td>
+                  <td>
+                    <a class="icon-btn" th:href="@{/customers/{id}(id=${c.id})}"
+                      ><i class="bi bi-chevron-right"></i
+                    ></a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div
+            class="card-body text-muted small"
+            th:text="'ทั้งหมด '+${customers.totalElements}+' รายการ'"
+          ></div>
+        </section>
+      </main>
+    </div>
+    <div class="modal fade" id="customerModal">
+      <div class="modal-dialog modal-lg">
+        <form
+          class="modal-content"
+          th:action="@{/customers}"
+          th:object="${customerForm}"
+          method="post"
+        >
+          <div class="modal-header">
+            <h5 class="modal-title">เพิ่มลูกค้า</h5>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">ประเภทลูกค้า</label
+                ><select class="form-select" th:field="*{customerType}">
+                  <option value="INDIVIDUAL">บุคคลทั่วไป</option>
+                  <option value="BUSINESS">นิติบุคคล</option>
+                </select>
+              </div>
+              <div class="col-md-8">
+                <label class="form-label required">ชื่อผู้ติดต่อ</label
+                ><input class="form-control" th:field="*{name}" required />
+              </div>
+              <div class="col-md-8">
+                <label class="form-label">ชื่อบริษัท</label
+                ><input class="form-control" th:field="*{companyName}" />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">เลขผู้เสียภาษี</label
+                ><input class="form-control" th:field="*{taxId}" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label required">เบอร์หลัก</label
+                ><input
+                  class="form-control"
+                  th:field="*{primaryPhone}"
+                  required
+                />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">เบอร์สำรอง</label
+                ><input class="form-control" th:field="*{secondaryPhone}" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">อีเมล</label
+                ><input class="form-control" type="email" th:field="*{email}" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">ไอดีไลน์</label
+                ><input class="form-control" th:field="*{lineId}" />
+              </div>
+              <div class="col-12">
+                <label class="form-label">ที่อยู่</label
+                ><textarea
+                  class="form-control"
+                  rows="3"
+                  th:field="*{address}"
+                ></textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label">หมายเหตุ</label
+                ><textarea class="form-control" th:field="*{note}"></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary">บันทึกลูกค้า</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+  </body>
+</html>

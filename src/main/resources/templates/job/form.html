@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/layout :: head('สร้างใบงานใหม่')}"></head>
+  <body>
+    <aside th:replace="~{fragments/layout :: sidebar('jobs')}"></aside>
+    <div th:replace="~{fragments/layout :: overlay}"></div>
+    <div class="app-shell">
+      <header th:replace="~{fragments/layout :: topbar}"></header>
+      <main class="app-content">
+        <div class="page-header">
+          <div>
+            <a th:href="@{/jobs}" class="small"
+              ><i class="bi bi-arrow-left me-1"></i>กลับไปรายการงาน</a
+            >
+            <h1 class="page-title mt-2">สร้างใบงานใหม่</h1>
+            <p class="page-subtitle">
+              กรอกข้อมูลใบงานบริการและกำหนดผู้รับผิดชอบ
+            </p>
+          </div>
+        </div>
+        <form
+          th:fragment="jobCreateForm"
+          th:action="@{/jobs}"
+          th:object="${jobForm}"
+          method="post"
+          class="card job-create-form"
+        >
+          <div class="card-body p-lg-4">
+            <div class="row g-4">
+              <div
+                class="col-12"
+                th:classappend="${jobForm.originalJobId != null ? 'col-lg-8' : ''}"
+              >
+                <h2 class="section-title mb-3">ข้อมูลใบงาน</h2>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label required">ลูกค้า</label
+                    ><select
+                      class="form-select"
+                      th:field="*{customerId}"
+                      data-searchable-select
+                      data-search-placeholder="ค้นหาลูกค้า..."
+                      required
+                    >
+                      <option value="">เลือกลูกค้า</option>
+                      <option
+                        th:each="c:${customers}"
+                        th:value="${c.id}"
+                        th:text="${c.customerCode+' · '+c.displayName}"
+                        th:data-address="${c.address}"
+                        th:data-phone="${c.primaryPhone}"
+                      ></option>
+                    </select>
+                    <div
+                      class="text-danger small"
+                      th:errors="*{customerId}"
+                    ></div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label required">บริการ</label
+                    ><select
+                      class="form-select"
+                      th:field="*{serviceId}"
+                      data-searchable-select
+                      data-search-placeholder="ค้นหาบริการ..."
+                      required
+                    >
+                      <option value="">เลือกบริการ</option>
+                      <option
+                        th:each="s:${services}"
+                        th:value="${s.id}"
+                        th:text="${s.serviceCode+' · '+s.serviceName}"
+                      ></option>
+                    </select>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label required">หัวข้องาน</label
+                    ><input
+                      class="form-control"
+                      th:field="*{title}"
+                      placeholder="เช่น แอร์สำนักงานไม่เย็น"
+                    />
+                    <div class="text-danger small" th:errors="*{title}"></div>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">รายละเอียดงาน</label
+                    ><textarea
+                      class="form-control"
+                      rows="4"
+                      th:field="*{description}"
+                      placeholder="ระบุอาการหรือสิ่งที่ต้องการให้บริการ"
+                    ></textarea>
+                  </div>
+                  <div class="col-12">
+                    <div class="p-3 rounded-3 bg-primary bg-opacity-10">
+                      <h3 class="h6 fw-bold text-primary mb-1">
+                        <i class="bi bi-info-circle me-2"></i>การนัดหมาย
+                      </h3>
+                      <p class="small mb-0 text-muted">
+                        กรุณาระบุช่วงเวลาให้ชัดเจน ระบบจะไม่อนุญาตให้หัวหน้าช่างรับงานซ้อนกัน
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="col-md-6"
+                    data-thai-datetime-group
+                    data-datetime-role="start"
+                  >
+                    <input
+                      type="hidden"
+                      th:field="*{appointmentStartDate}"
+                      data-date-value
+                    />
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <label class="form-label required">วันที่เริ่ม</label>
+                        <input
+                          class="form-control"
+                          type="text"
+                          data-thai-date
+                          data-date-placeholder="เลือกวันที่เริ่ม"
+                          required
+                        />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label required">เวลาเริ่ม</label>
+                        <select
+                          class="form-select"
+                          data-time-choice
+                          data-thai-time
+                          data-searchable-select
+                          data-search-placeholder="ค้นหาเวลา เช่น 08:30"
+                          th:field="*{appointmentStartTime}"
+                          th:attr="data-initial-time=*{appointmentStartTime}"
+                          required
+                        >
+                          <option value="">เลือกเวลาเริ่ม</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div
+                      class="text-danger small mt-1"
+                      th:errors="*{appointmentStartDate}"
+                    ></div>
+                    <div
+                      class="text-danger small"
+                      th:errors="*{appointmentStartTime}"
+                    ></div>
+                  </div>
+                  <div
+                    class="col-md-6"
+                    data-thai-datetime-group
+                    data-datetime-role="end"
+                  >
+                    <input
+                      type="hidden"
+                      th:field="*{appointmentEndDate}"
+                      data-date-value
+                    />
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <label class="form-label required">วันที่สิ้นสุด</label>
+                        <input
+                          class="form-control"
+                          type="text"
+                          data-thai-date
+                          data-date-placeholder="เลือกวันที่สิ้นสุด"
+                          required
+                        />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label required">เวลาสิ้นสุด</label>
+                        <select
+                          class="form-select"
+                          data-time-choice
+                          data-thai-time
+                          data-searchable-select
+                          data-search-placeholder="ค้นหาเวลา เช่น 17:00"
+                          th:field="*{appointmentEndTime}"
+                          th:attr="data-initial-time=*{appointmentEndTime}"
+                          required
+                        >
+                          <option value="">เลือกเวลาสิ้นสุด</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div
+                      class="text-danger small mt-1"
+                      th:errors="*{appointmentEndDate}"
+                    ></div>
+                    <div
+                      class="text-danger small"
+                      th:errors="*{appointmentEndTime}"
+                    ></div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">หัวหน้าช่าง</label
+                    ><select
+                      class="form-select"
+                      th:field="*{technicianId}"
+                      data-searchable-select
+                      data-search-placeholder="ค้นหาหัวหน้าช่าง..."
+                    >
+                      <option value="">ยังไม่มอบหมาย</option>
+                      <option
+                        th:each="u:${technicians}"
+                        th:value="${u.id}"
+                        th:text="${u.fullName}"
+                      ></option></select
+                    ><small class="text-muted"
+                      >ระบบจะป้องกันการมอบหมายงานซ้อน</small
+                    >
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">ความสำคัญ</label
+                    ><select class="form-select" th:field="*{priority}">
+                      <option
+                        th:each="p:${priorities}"
+                        th:value="${p}"
+                        th:text="${p.name()=='URGENT'?'ด่วน':'ปกติ'}"
+                      ></option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">เบอร์ติดต่อสำหรับงานนี้</label
+                    ><input class="form-control" th:field="*{contactPhone}" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">ภาษีมูลค่าเพิ่ม</label
+                    ><select class="form-select" th:field="*{vatMode}">
+                      <option value="INCLUSIVE">รวมภาษีมูลค่าเพิ่ม 7% ในราคาสุทธิ</option>
+                      <option value="NO_VAT">ไม่คิดภาษีมูลค่าเพิ่ม</option>
+                    </select>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label required">สถานที่ให้บริการ</label
+                    ><textarea
+                      class="form-control"
+                      rows="3"
+                      th:field="*{address}"
+                    ></textarea>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">หมายเหตุภายใน</label
+                    ><textarea
+                      class="form-control"
+                      rows="3"
+                      th:field="*{internalNote}"
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="col-lg-4"
+                th:if="${jobForm.originalJobId != null}"
+              >
+                <div
+                  th:if="*{originalJobId != null}"
+                  class="p-3 rounded-3 bg-warning bg-opacity-10 mb-3"
+                >
+                  <strong>งานแก้</strong
+                  ><input type="hidden" th:field="*{originalJobId}" /><input
+                    type="hidden"
+                    th:field="*{jobType}"
+                  /><label class="form-label mt-3">เหตุผลที่เปิดงานแก้</label
+                  ><textarea
+                    class="form-control"
+                    th:field="*{reworkReason}"
+                  ></textarea>
+                  <div class="form-check mt-3">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      th:field="*{underWarranty}"
+                    /><label class="form-check-label">อยู่ในประกัน</label>
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      th:field="*{chargeable}"
+                    /><label class="form-check-label">คิดค่าบริการ</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="card-footer bg-transparent d-flex justify-content-end gap-2 p-3"
+          >
+            <button
+              th:if="${modalMode}"
+              class="btn btn-outline-secondary"
+              type="button"
+              data-bs-dismiss="modal"
+            >ยกเลิก</button>
+            <a
+              th:unless="${modalMode}"
+              class="btn btn-outline-secondary"
+              th:href="@{/jobs}"
+              >ยกเลิก</a
+            ><button class="btn btn-primary px-4" type="submit">
+              <i class="bi bi-floppy me-2"></i>บันทึกใบงาน
+            </button>
+          </div>
+        </form>
+      </main>
+    </div>
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+    <script>
+      const customer = document.querySelector('[name="customerId"]');
+      customer?.addEventListener("change", () => {
+        const o = customer.selectedOptions[0];
+        if (
+          o?.dataset.address &&
+          !document.querySelector('[name="address"]').value
+        )
+          document.querySelector('[name="address"]').value = o.dataset.address;
+        if (
+          o?.dataset.phone &&
+          !document.querySelector('[name="contactPhone"]').value
+        )
+          document.querySelector('[name="contactPhone"]').value =
+            o.dataset.phone;
+      });
+    </script>
+  </body>
+</html>

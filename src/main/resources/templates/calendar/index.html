@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/layout :: head('ปฏิทินงาน')}"></head>
+  <body>
+    <aside th:replace="~{fragments/layout :: sidebar('calendar')}"></aside>
+    <div th:replace="~{fragments/layout :: overlay}"></div>
+    <div class="app-shell">
+      <header th:replace="~{fragments/layout :: topbar}"></header>
+      <main class="app-content">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">ปฏิทินงาน</h1>
+            <p class="page-subtitle">
+              วางแผนงานบริการ จัดการหัวหน้าช่างได้อย่างมีประสิทธิภาพ
+            </p>
+          </div>
+          <a class="btn btn-primary" th:href="@{/jobs/new}"
+            ><i class="bi bi-plus-lg me-2"></i>สร้างใบงาน</a
+          >
+        </div>
+        <section class="card">
+          <div
+            class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2"
+          >
+            <div class="btn-group">
+              <a
+                class="btn btn-outline-primary"
+                th:href="@{/calendar(month=${month.minusMonths(1)})}"
+                ><i class="bi bi-chevron-left"></i></a
+              ><span
+                class="btn btn-light fw-bold px-4"
+                th:text="${monthLabel}"
+              ></span
+              ><a
+                class="btn btn-outline-primary"
+                th:href="@{/calendar(month=${month.plusMonths(1)})}"
+                ><i class="bi bi-chevron-right"></i
+              ></a>
+            </div>
+            <div class="d-flex gap-2">
+              <select
+                class="form-select"
+                data-searchable-select
+                data-search-placeholder="ค้นหาหัวหน้าช่าง..."
+              >
+                <option>หัวหน้าช่างทั้งหมด</option>
+                <option
+                  th:each="u:${technicians}"
+                  th:text="${u.fullName}"
+                ></option></select
+              ><select class="form-select">
+                <option>สถานะทั้งหมด</option>
+              </select>
+            </div>
+          </div>
+          <div class="calendar-grid">
+            <div
+              class="p-2 text-center fw-bold text-muted"
+              th:each="name : ${weekdayNames}"
+              th:text="${name}"
+            ></div>
+            <div
+              class="calendar-day"
+              th:each="day:${days}"
+              th:classappend="${!day.currentMonth}?'opacity-50'"
+            >
+              <strong th:text="${day.date.dayOfMonth}"></strong
+              ><a
+                class="calendar-event"
+                th:each="job:${day.jobs}"
+                th:href="@{/jobs/{id}(id=${job.id})}"
+                th:style="${job.jobStatus.name()=='COMPLETED'?'border-color:#10b981':(job.jobStatus.name()=='WAITING_PART'?'border-color:#f59e0b':'')}"
+                ><strong
+                  th:text="${#temporals.format(job.appointmentStart,'HH:mm')+' '+job.customer.displayName}"
+                ></strong
+                ><span
+                  class="d-block text-truncate"
+                  th:text="${job.title}"
+                ></span
+                ><small
+                  th:text="${job.technician != null ? job.technician.firstName : 'ยังไม่มอบหมาย'}"
+                ></small
+              ></a>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+  </body>
+</html>

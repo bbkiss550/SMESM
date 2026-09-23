@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/layout :: head('รายละเอียดลูกค้า')}"></head>
+  <body>
+    <aside th:replace="~{fragments/layout :: sidebar('customers')}"></aside>
+    <div th:replace="~{fragments/layout :: overlay}"></div>
+    <div class="app-shell">
+      <header th:replace="~{fragments/layout :: topbar}"></header>
+      <main class="app-content">
+        <div th:replace="~{fragments/layout :: flash}"></div>
+        <div class="page-header">
+          <div>
+            <a th:href="@{/customers}" class="small"
+              ><i class="bi bi-arrow-left"></i> กลับไปรายการลูกค้า</a
+            >
+            <h1 class="page-title mt-2">รายละเอียดลูกค้า</h1>
+          </div>
+          <div class="d-flex gap-2">
+            <a
+              class="btn btn-primary"
+              th:href="@{/jobs/new(customerId=${customer.id})}"
+              ><i class="bi bi-plus-lg me-2"></i>สร้างใบงาน</a
+            >
+            <form
+              class="js-confirm"
+              th:action="@{/customers/{id}/toggle(id=${customer.id})}"
+              method="post"
+            >
+              <button
+                class="btn btn-outline-secondary"
+                th:text="${customer.active?'ปิดใช้งาน':'เปิดใช้งาน'}"
+              ></button>
+            </form>
+          </div>
+        </div>
+        <section class="card mb-3">
+          <div class="card-body d-flex flex-wrap align-items-center gap-4">
+            <div
+              class="avatar"
+              style="width: 72px; height: 72px; font-size: 1.5rem"
+              th:text="${#strings.substring(customer.displayName,0,1)}"
+            ></div>
+            <div class="flex-grow-1">
+              <div class="text-muted" th:text="${customer.customerCode}"></div>
+              <h2
+                class="h3 fw-bold mb-1"
+                th:text="${customer.displayName}"
+              ></h2>
+              <span
+                class="status-badge status-COMPLETED"
+                th:text="${customer.customerType.name()=='BUSINESS'?'ลูกค้าธุรกิจ':'ลูกค้าทั่วไป'}"
+              ></span>
+            </div>
+            <div class="text-end">
+              <div class="text-muted">งานทั้งหมด</div>
+              <strong class="fs-2" th:text="${#lists.size(jobs)}"></strong>
+            </div>
+          </div>
+        </section>
+        <div class="row g-3">
+          <div class="col-lg-5">
+            <section class="card h-100">
+              <div class="card-header">
+                <h2 class="section-title">ข้อมูลติดต่อ</h2>
+              </div>
+              <div class="card-body d-grid gap-3">
+                <div>
+                  <small class="text-muted">ชื่อผู้ติดต่อ</small>
+                  <div class="fw-bold" th:text="${customer.name}"></div>
+                </div>
+                <div>
+                  <small class="text-muted">เบอร์โทร</small>
+                  <div th:each="p:${customer.phones}" th:if="${p.active}">
+                    <span th:text="${p.phone}"></span>
+                    <small
+                      class="text-muted"
+                      th:text="'('+${p.label}+')'"
+                    ></small>
+                  </div>
+                </div>
+                <div>
+                  <small class="text-muted">อีเมล</small>
+                  <div th:text="${customer.email ?: '-'}"></div>
+                </div>
+                <div>
+                  <small class="text-muted">ไอดีไลน์</small>
+                  <div th:text="${customer.lineId ?: '-'}"></div>
+                </div>
+                <div>
+                  <small class="text-muted">ที่อยู่</small>
+                  <div th:text="${customer.address ?: '-'}"></div>
+                </div>
+                <div>
+                  <small class="text-muted">หมายเหตุ</small>
+                  <div th:text="${customer.note ?: '-'}"></div>
+                </div>
+              </div>
+            </section>
+          </div>
+          <div class="col-lg-7">
+            <section class="card h-100">
+              <div class="card-header">
+                <h2 class="section-title">ประวัติการใช้บริการ</h2>
+              </div>
+              <div class="table-responsive">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>เลขที่ใบงาน</th>
+                      <th>วันที่</th>
+                      <th>บริการ</th>
+                      <th>หัวข้องาน</th>
+                      <th>ยอดรวม</th>
+                      <th>สถานะ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr th:each="job:${jobs}">
+                      <td>
+                        <a
+                          th:href="@{/jobs/{id}(id=${job.id})}"
+                          th:text="${job.jobNo}"
+                        ></a>
+                      </td>
+                      <td
+                        th:text="${#temporals.format(job.appointmentStart,'dd/MM/yyyy')}"
+                      ></td>
+                      <td th:text="${job.service.serviceName}"></td>
+                      <td th:text="${job.title}"></td>
+                      <td
+                        th:text="${#numbers.formatDecimal(job.grandTotal,1,'COMMA',0,'POINT')}"
+                      ></td>
+                      <td>
+                        <span
+                          class="status-badge"
+                          th:classappend="'status-'+${job.jobStatus}"
+                          th:text="${statusLabels[job.jobStatus.name()]}"
+                        ></span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+  </body>
+</html>

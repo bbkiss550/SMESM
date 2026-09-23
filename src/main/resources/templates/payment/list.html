@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/layout :: head('การชำระเงิน')}"></head>
+  <body>
+    <aside th:replace="~{fragments/layout :: sidebar('payments')}"></aside>
+    <div th:replace="~{fragments/layout :: overlay}"></div>
+    <div class="app-shell">
+      <header th:replace="~{fragments/layout :: topbar}"></header>
+      <main class="app-content">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">การชำระเงิน</h1>
+            <p class="page-subtitle">
+              ติดตามรายการรับชำระ มัดจำ และเอกสารรับเงิน
+            </p>
+          </div>
+        </div>
+        <form class="card filter-bar">
+          <div class="input-group">
+            <span class="input-group-text bg-transparent"
+              ><i class="bi bi-search"></i></span
+            ><input
+              class="form-control"
+              name="q"
+              th:value="${q}"
+              placeholder="ค้นหาเลขที่ชำระเงิน เลขที่ใบงาน หรือลูกค้า"
+            /><button class="btn btn-outline-primary">ค้นหา</button>
+          </div>
+        </form>
+        <section class="card">
+          <div class="card-header d-flex justify-content-between">
+            <h2 class="section-title">รายการชำระเงิน</h2>
+            <span
+              class="text-muted"
+              th:text="${payments.totalElements}+' รายการ'"
+            ></span>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>เลขที่ชำระเงิน</th>
+                  <th>เลขที่ใบเสร็จ</th>
+                  <th>เลขที่ใบงาน</th>
+                  <th>ลูกค้า</th>
+                  <th>วันที่ชำระ</th>
+                  <th>ประเภท</th>
+                  <th>วิธีชำระ</th>
+                  <th class="text-end">จำนวนเงิน</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="p:${payments.content}">
+                  <td
+                    class="text-primary fw-bold"
+                    th:text="${p.paymentNo}"
+                  ></td>
+                  <td th:text="${p.receiptNo}"></td>
+                  <td>
+                    <a
+                      th:href="@{/jobs/{id}(id=${p.job.id})}"
+                      th:text="${p.job.jobNo}"
+                    ></a>
+                  </td>
+                  <td th:text="${p.job.customer.displayName}"></td>
+                  <td
+                    th:text="${#temporals.format(p.paymentDate,'dd/MM/yyyy HH:mm')}"
+                  ></td>
+                  <td th:text="${enumLabels[p.paymentType.name()]}"></td>
+                  <td th:text="${enumLabels[p.paymentMethod.name()]}"></td>
+                  <td
+                    class="text-end fw-bold"
+                    th:text="'฿'+${#numbers.formatDecimal(p.amount,1,'COMMA',2,'POINT')}"
+                  ></td>
+                  <td>
+                    <a
+                      class="btn btn-sm btn-outline-primary"
+                      th:href="@{/payments/{id}/receipt(id=${p.id})}"
+                      target="_blank"
+                      ><i class="bi bi-printer"></i
+                    ></a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+  </body>
+</html>

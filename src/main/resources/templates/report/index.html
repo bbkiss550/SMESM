@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/layout :: head('รายงาน')}"></head>
+  <body>
+    <aside th:replace="~{fragments/layout :: sidebar('reports')}"></aside>
+    <div th:replace="~{fragments/layout :: overlay}"></div>
+    <div class="app-shell">
+      <header th:replace="~{fragments/layout :: topbar}"></header>
+      <main class="app-content">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">รายงาน</h1>
+            <p class="page-subtitle">
+              วิเคราะห์ข้อมูลเพื่อการตัดสินใจที่ดีขึ้น
+            </p>
+          </div>
+          <button class="btn btn-outline-primary" onclick="window.print()">
+            <i class="bi bi-download me-2"></i>ส่งออกรายงาน
+          </button>
+        </div>
+        <ul class="nav nav-pills nav-fill card p-2 mb-3" role="tablist">
+          <li class="nav-item">
+            <button
+              class="nav-link active"
+              data-bs-toggle="tab"
+              data-bs-target="#revenue"
+            >
+              รายงานรายได้
+            </button>
+          </li>
+          <li class="nav-item">
+            <button
+              class="nav-link"
+              data-bs-toggle="tab"
+              data-bs-target="#jobs"
+            >
+              รายงานงานบริการ
+            </button>
+          </li>
+          <li class="nav-item">
+            <button
+              class="nav-link"
+              data-bs-toggle="tab"
+              data-bs-target="#technicians"
+            >
+              ประสิทธิภาพหัวหน้าช่าง
+            </button>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <section class="tab-pane fade show active" id="revenue">
+            <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr)">
+              <article class="card kpi-card">
+                <span class="kpi-icon"><i class="bi bi-graph-up"></i></span>
+                <div>
+                  <div class="kpi-label">รายได้เดือนนี้</div>
+                  <div
+                    class="kpi-value fs-4"
+                    th:text="'฿'+${#numbers.formatDecimal(summary.revenueMonth,1,'COMMA',0,'POINT')}"
+                  ></div>
+                </div>
+              </article>
+              <article class="card kpi-card">
+                <span class="kpi-icon"
+                  ><i class="bi bi-calendar-check"></i
+                ></span>
+                <div>
+                  <div class="kpi-label">งานเสร็จเดือนนี้</div>
+                  <div
+                    class="kpi-value"
+                    th:text="${summary.completedMonth}"
+                  ></div>
+                </div>
+              </article>
+              <article class="card kpi-card">
+                <span class="kpi-icon"><i class="bi bi-clipboard"></i></span>
+                <div>
+                  <div class="kpi-label">งานทั้งหมด</div>
+                  <div class="kpi-value" th:text="${summary.totalJobs}"></div>
+                </div>
+              </article>
+            </div>
+            <div class="row g-3">
+              <div class="col-lg-6">
+                <div class="card chart-card">
+                  <div class="card-header">
+                    <h2 class="section-title">รายได้รายวัน</h2>
+                  </div>
+                  <div class="card-body">
+                    <div class="chart-wrap">
+                      <canvas id="dailyRevenue"></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-6">
+                <div class="card chart-card">
+                  <div class="card-header">
+                    <h2 class="section-title">รายได้รายเดือน</h2>
+                  </div>
+                  <div class="card-body">
+                    <div class="chart-wrap">
+                      <canvas id="monthlyRevenue"></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section class="tab-pane fade" id="jobs">
+            <div class="row g-3">
+              <div class="col-lg-6">
+                <div class="card chart-card">
+                  <div class="card-header">
+                    <h2 class="section-title">งานแยกตามสถานะ</h2>
+                  </div>
+                  <div class="card-body">
+                    <div class="chart-wrap">
+                      <canvas id="statusChart"></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-6">
+                <div class="card chart-card">
+                  <div class="card-header">
+                    <h2 class="section-title">งานแยกตามบริการ</h2>
+                  </div>
+                  <div class="card-body">
+                    <div class="chart-wrap">
+                      <canvas id="serviceReport"></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section class="tab-pane fade" id="technicians">
+            <div class="card">
+              <div class="table-responsive">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>หัวหน้าช่าง</th>
+                      <th class="text-end">งานที่มอบหมาย</th>
+                      <th class="text-end">งานเสร็จ</th>
+                      <th>อัตราสำเร็จ</th>
+                      <th class="text-end">รายได้ที่สร้าง</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr th:each="t:${technicians}">
+                      <td class="fw-bold" th:text="${t.technician}"></td>
+                      <td class="text-end" th:text="${t.assigned}"></td>
+                      <td class="text-end" th:text="${t.completed}"></td>
+                      <td>
+                        <div class="progress" style="height: 8px">
+                          <div
+                            class="progress-bar bg-success"
+                            th:style="'width:'+${t.completion_rate ?: 0}+'%'"
+                          ></div>
+                        </div>
+                        <small th:text="${t.completion_rate ?: 0}+'%'"></small>
+                      </td>
+                      <td
+                        class="text-end"
+                        th:text="'฿'+${#numbers.formatDecimal(t.revenue,1,'COMMA',0,'POINT')}"
+                      ></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+    <script th:inline="javascript">
+      const daily=[[${revenueByDay}]],monthly=[[${monthlyRevenue}]],statuses=[[${jobStatuses}]],services=[[${serviceBreakdown}]];const line=(id,data,type='line')=>new Chart(document.getElementById(id),{type,data:{labels:data.map(x=>x.label||x.month),datasets:[{data:data.map(x=>x.value),backgroundColor:type==='bar'?'#258cff':'rgba(8,120,249,.13)',borderColor:'#0878f9',fill:true,tension:.3,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true},x:{grid:{display:false}}}}});line('dailyRevenue',daily);line('monthlyRevenue',monthly.map(x=>({label:x.month,value:x.value})),'bar');line('statusChart',statuses,'bar');line('serviceReport',services,'bar');
+    </script>
+  </body>
+</html>

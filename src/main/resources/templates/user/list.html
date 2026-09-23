@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/layout :: head('ผู้ใช้งาน')}"></head>
+  <body>
+    <aside th:replace="~{fragments/layout :: sidebar('users')}"></aside>
+    <div th:replace="~{fragments/layout :: overlay}"></div>
+    <div class="app-shell">
+      <header th:replace="~{fragments/layout :: topbar}"></header>
+      <main class="app-content">
+        <div th:replace="~{fragments/layout :: flash}"></div>
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">ผู้ใช้งาน</h1>
+            <p class="page-subtitle">
+              จัดการสิทธิ์การเข้าถึงและดูแลทีมงานของคุณ
+            </p>
+          </div>
+          <button
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#userModal"
+          >
+            <i class="bi bi-plus-lg me-2"></i>สร้างผู้ใช้งาน
+          </button>
+        </div>
+        <section class="kpi-grid" style="grid-template-columns: repeat(2, 1fr)">
+          <article class="card kpi-card">
+            <span class="kpi-icon"><i class="bi bi-people"></i></span>
+            <div>
+              <div class="kpi-label">ผู้ใช้งานทั้งหมด</div>
+              <div class="kpi-value" th:text="${users.totalElements}"></div>
+            </div>
+          </article>
+          <article class="card kpi-card">
+            <span class="kpi-icon"><i class="bi bi-person-check"></i></span>
+            <div>
+              <div class="kpi-label">หน้าปัจจุบัน</div>
+              <div
+                class="kpi-value"
+                th:text="${#lists.size(users.content)}"
+              ></div>
+            </div>
+          </article>
+        </section>
+        <form class="card filter-bar">
+          <div class="input-group">
+            <span class="input-group-text bg-transparent"
+              ><i class="bi bi-search"></i></span
+            ><input
+              class="form-control"
+              name="q"
+              th:value="${q}"
+              placeholder="ค้นหาชื่อผู้ใช้ ชื่อ–นามสกุล"
+            /><button class="btn btn-outline-primary">ค้นหา</button>
+          </div>
+        </form>
+        <section class="card">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>ชื่อผู้ใช้</th>
+                  <th>ชื่อ–นามสกุล</th>
+                  <th>บทบาท</th>
+                  <th>เบอร์โทร</th>
+                  <th>อีเมล</th>
+                  <th>สถานะ</th>
+                  <th>จัดการ</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="u:${users.content}">
+                  <td class="fw-bold" th:text="${u.username}"></td>
+                  <td th:text="${u.fullName}"></td>
+                  <td>
+                    <span
+                      class="badge text-bg-primary"
+                      th:text="${enumLabels[u.role.code]}"
+                    ></span>
+                  </td>
+                  <td th:text="${u.phone ?: '-'}"></td>
+                  <td th:text="${u.email ?: '-'}"></td>
+                  <td>
+                    <span
+                      class="status-badge"
+                      th:classappend="'status-'+${u.status}"
+                      th:text="${statusLabels[u.status]}"
+                    ></span>
+                  </td>
+                  <td>
+                    <div class="d-flex gap-1">
+                      <form
+                        class="js-confirm"
+                        th:action="@{/users/{id}/toggle(id=${u.id})}"
+                        method="post"
+                      >
+                        <button
+                          class="btn btn-sm btn-outline-secondary"
+                          th:text="${u.active?'ปิด':'เปิด'}"
+                        ></button>
+                      </form>
+                      <form
+                        class="js-confirm"
+                        th:action="@{/users/{id}/reset-password(id=${u.id})}"
+                        method="post"
+                      >
+                        <button class="btn btn-sm btn-outline-warning">
+                          ตั้งรหัสผ่านใหม่
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+    <div class="modal fade" id="userModal">
+      <div class="modal-dialog modal-lg">
+        <form
+          class="modal-content"
+          th:action="@{/users}"
+          th:object="${userForm}"
+          method="post"
+        >
+          <div class="modal-header">
+            <h5 class="modal-title">สร้างผู้ใช้งาน</h5>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label required">ชื่อผู้ใช้</label
+                ><input class="form-control" th:field="*{username}" required />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label required">รหัสผ่านเริ่มต้น</label
+                ><input
+                  class="form-control"
+                  type="password"
+                  th:field="*{password}"
+                  minlength="8"
+                  required
+                />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label required">ชื่อ</label
+                ><input class="form-control" th:field="*{firstName}" required />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label required">นามสกุล</label
+                ><input class="form-control" th:field="*{lastName}" required />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">บทบาท</label
+                ><select class="form-select" th:field="*{roleId}">
+                  <option
+                    th:each="r:${roles}"
+                    th:value="${r.id}"
+                    th:text="${r.name}"
+                  ></option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">เบอร์โทร</label
+                ><input class="form-control" th:field="*{phone}" />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">อีเมล</label
+                ><input class="form-control" type="email" th:field="*{email}" />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary">สร้างผู้ใช้งาน</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+  </body>
+</html>

@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/layout :: head('งานบริการ')}"></head>
+  <body>
+    <aside th:replace="~{fragments/layout :: sidebar('jobs')}"></aside>
+    <div th:replace="~{fragments/layout :: overlay}"></div>
+    <div class="app-shell">
+      <header th:replace="~{fragments/layout :: topbar}"></header>
+      <main class="app-content">
+        <div th:replace="~{fragments/layout :: flash}"></div>
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">งานบริการ</h1>
+            <p class="page-subtitle">
+              จัดการใบงานบริการ ดูแลลูกค้า และติดตามงานได้อย่างมีประสิทธิภาพ
+            </p>
+          </div>
+          <button
+            class="btn btn-primary px-4"
+            type="button"
+            data-bs-toggle="modal"
+            data-bs-target="#createJobModal"
+          ><i class="bi bi-plus-lg me-2"></i>สร้างใบงาน</button>
+        </div>
+        <section class="kpi-grid" style="grid-template-columns: repeat(6, 1fr)">
+          <article class="card kpi-card">
+            <div>
+              <div class="kpi-label">ทั้งหมด</div>
+              <div class="kpi-value" th:text="${jobs.totalElements}">128</div>
+            </div>
+          </article>
+          <article
+            class="card kpi-card"
+            th:each="s:${statuses}"
+            th:if="${s.name() != 'CANCELLED'}"
+          >
+            <div>
+              <div class="kpi-label" th:text="${statusLabels[s.name()]}"></div>
+              <div class="kpi-value fs-3">—</div>
+            </div>
+          </article>
+        </section>
+        <form class="card filter-bar" method="get">
+          <div class="row g-2 align-items-center">
+            <div class="col-lg-7">
+              <div class="input-group">
+                <span class="input-group-text bg-transparent"
+                  ><i class="bi bi-search"></i></span
+                ><input
+                  class="form-control"
+                  name="q"
+                  th:value="${q}"
+                  placeholder="ค้นหาเลขที่ใบงาน ลูกค้า เบอร์โทร หรือหัวข้องาน"
+                />
+              </div>
+            </div>
+            <div class="col-lg-3">
+              <select class="form-select" name="status">
+                <option value="">ทุกสถานะ</option>
+                <option
+                  th:each="s:${statuses}"
+                  th:value="${s}"
+                  th:text="${statusLabels[s.name()]}"
+                  th:selected="${s==selectedStatus}"
+                ></option>
+              </select>
+            </div>
+            <div class="col-lg-2 d-grid">
+              <button class="btn btn-outline-primary">กรองข้อมูล</button>
+            </div>
+          </div>
+        </form>
+        <section class="card">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>เลขที่ใบงาน</th>
+                  <th>ลูกค้า</th>
+                  <th>หัวข้องาน</th>
+                  <th>บริการ</th>
+                  <th>หัวหน้าช่าง</th>
+                  <th>วันนัดหมาย</th>
+                  <th>สถานะ</th>
+                  <th class="text-end">ยอดรวม</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="job:${jobs.content}">
+                  <td>
+                    <a
+                      class="fw-bold"
+                      th:href="@{/jobs/{id}(id=${job.id})}"
+                      th:text="${job.jobNo}"
+                    ></a>
+                  </td>
+                  <td>
+                    <strong th:text="${job.customer.displayName}"></strong
+                    ><small
+                      class="d-block text-muted"
+                      th:text="${job.contactPhone}"
+                    ></small>
+                  </td>
+                  <td th:text="${job.title}"></td>
+                  <td th:text="${job.service.serviceName}"></td>
+                  <td
+                    th:text="${job.technician != null ? job.technician.fullName : '-'}"
+                  ></td>
+                  <td
+                    th:text="${#temporals.format(job.appointmentStart,'dd/MM/yyyy HH:mm')}"
+                  ></td>
+                  <td>
+                    <span
+                      class="status-badge"
+                      th:classappend="'status-'+${job.jobStatus}"
+                      th:text="${statusLabels[job.jobStatus.name()]}"
+                    ></span>
+                  </td>
+                  <td
+                    class="text-end fw-semibold"
+                    th:text="'฿'+${#numbers.formatDecimal(job.grandTotal,1,'COMMA',2,'POINT')}"
+                  ></td>
+                  <td>
+                    <a class="icon-btn" th:href="@{/jobs/{id}(id=${job.id})}"
+                      ><i class="bi bi-three-dots-vertical"></i
+                    ></a>
+                  </td>
+                </tr>
+                <tr th:if="${jobs.empty}">
+                  <td colspan="9">
+                    <div class="empty-state">
+                      <i class="bi bi-inbox"></i>ไม่พบใบงาน
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div
+            class="card-body d-flex justify-content-between align-items-center"
+          >
+            <small
+              class="text-muted"
+              th:text="'ทั้งหมด '+${jobs.totalElements}+' รายการ'"
+            ></small>
+            <nav th:if="${jobs.totalPages>1}">
+              <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" th:classappend="${jobs.first}?'disabled'">
+                  <a
+                    class="page-link"
+                    th:href="@{/jobs(page=${jobs.number-1},q=${q},status=${selectedStatus})}"
+                    >‹</a
+                  >
+                </li>
+                <li class="page-item active">
+                  <span class="page-link" th:text="${jobs.number+1}"></span>
+                </li>
+                <li class="page-item" th:classappend="${jobs.last}?'disabled'">
+                  <a
+                    class="page-link"
+                    th:href="@{/jobs(page=${jobs.number+1},q=${q},status=${selectedStatus})}"
+                    >›</a
+                  >
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </section>
+      </main>
+    </div>
+    <div
+      class="modal fade"
+      id="createJobModal"
+      tabindex="-1"
+      aria-labelledby="createJobModalTitle"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered modal-fullscreen-lg-down">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title fs-5" id="createJobModalTitle">สร้างใบงานใหม่</h2>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="ปิด"
+            ></button>
+          </div>
+          <div class="modal-body p-0">
+            <div th:replace="~{job/form :: jobCreateForm}"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+  </body>
+</html>

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+  <head
+    th:replace="~{fragments/layout :: head('จัดการงานบริการง่ายขึ้นในที่เดียว')}"
+  ></head>
+  <body class="public-body">
+    <nav class="public-nav">
+      <a class="public-brand" th:href="@{/}"
+        ><span class="brand-mark text-white"
+          ><i class="bi bi-briefcase-fill"></i></span
+        ><span>SME Service Manager</span></a
+      >
+      <div class="d-flex gap-3 align-items-center">
+        <a href="#features" class="text-body d-none d-md-inline">ฟีเจอร์</a
+        ><a th:href="@{/login}" class="btn btn-outline-primary">เข้าสู่ระบบ</a>
+      </div>
+    </nav>
+    <main>
+      <section class="hero">
+        <div>
+          <span class="status-badge status-IN_PROGRESS mb-3"
+            >ระบบจัดการงานบริการ สำหรับธุรกิจ SME</span
+          >
+          <h1>จัดการงานบริการง่ายขึ้นในที่เดียว</h1>
+          <p class="my-4">
+            ดูแลลูกค้า ใบงาน นัดหมาย สต๊อก และการเงิน ครบทุกขั้นตอน
+            เพื่อให้ธุรกิจบริการของคุณเติบโตอย่างมั่นคง
+          </p>
+          <div class="d-flex flex-wrap gap-3">
+            <a th:href="@{/login}" class="btn btn-primary btn-lg px-4"
+              >ทดลองระบบ <i class="bi bi-arrow-right ms-2"></i></a
+            ><a href="#features" class="btn btn-outline-primary btn-lg px-4"
+              >ดูรายละเอียด</a
+            >
+          </div>
+          <div class="d-flex flex-wrap gap-4 mt-4 small text-success">
+            <span><i class="bi bi-check-circle-fill me-1"></i>ใช้งานง่าย</span
+            ><span
+              ><i class="bi bi-check-circle-fill me-1"></i
+              >พร้อมใช้ทุกอุปกรณ์</span
+            ><span
+              ><i class="bi bi-check-circle-fill me-1"></i>ข้อมูลปลอดภัย</span
+            >
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <strong>ภาพรวมงานบริการ</strong
+            ><span class="badge text-bg-primary">วันนี้</span>
+          </div>
+          <div class="hero-dashboard">
+            <div class="hero-mini">
+              <div class="text-muted">งานทั้งหมด</div>
+              <div class="fs-2 fw-bold text-primary">128</div>
+              <small class="text-success">▲ 12%</small>
+            </div>
+            <div class="hero-mini">
+              <div class="text-muted">งานวันนี้</div>
+              <div class="fs-2 fw-bold text-primary">14</div>
+              <small class="text-success">▲ 27%</small>
+            </div>
+            <div class="hero-mini">
+              <div class="text-muted">เสร็จเดือนนี้</div>
+              <div class="fs-2 fw-bold text-success">47</div>
+            </div>
+            <div class="hero-mini">
+              <div class="text-muted">รายได้เดือนนี้</div>
+              <div class="fs-3 fw-bold text-primary">฿186,500</div>
+            </div>
+          </div>
+          <div class="mt-3 p-3 rounded-3 bg-primary bg-opacity-10">
+            <i class="bi bi-graph-up-arrow text-primary me-2"></i
+            >ติดตามทุกงานแบบเรียลไทม์
+          </div>
+        </div>
+      </section>
+      <section id="features" class="feature-section text-center">
+        <small class="text-primary fw-bold">ฟีเจอร์เด่น</small>
+        <h2 class="fw-bold mt-2">ฟีเจอร์ที่ออกแบบมาเพื่อธุรกิจบริการ</h2>
+        <p class="text-muted">
+          ครบครัน ใช้งานง่าย ช่วยให้คุณบริหารจัดการได้อย่างมืออาชีพ
+        </p>
+        <div class="feature-grid text-start">
+          <article class="feature-card">
+            <div class="kpi-icon mb-3">
+              <i class="bi bi-clipboard2-check-fill"></i>
+            </div>
+            <h3 class="h5 fw-bold">จัดการใบงาน</h3>
+            <p class="text-muted mb-0">
+              สร้าง นัดหมาย มอบหมายช่าง และติดตามสถานะงานได้ครบในหน้าจอเดียว
+            </p>
+          </article>
+          <article class="feature-card">
+            <div class="kpi-icon mb-3"><i class="bi bi-people-fill"></i></div>
+            <h3 class="h5 fw-bold">ดูแลลูกค้า</h3>
+            <p class="text-muted mb-0">
+              เก็บข้อมูลติดต่อและประวัติบริการ เพื่อดูแลลูกค้าได้อย่างต่อเนื่อง
+            </p>
+          </article>
+          <article class="feature-card">
+            <div class="kpi-icon mb-3"><i class="bi bi-box-seam-fill"></i></div>
+            <h3 class="h5 fw-bold">ควบคุมสต๊อก</h3>
+            <p class="text-muted mb-0">
+              ตัดสต๊อกอัตโนมัติ ป้องกันยอดติดลบ และแจ้งเตือนสินค้าใกล้หมด
+            </p>
+          </article>
+        </div>
+      </section>
+    </main>
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+  </body>
+</html>

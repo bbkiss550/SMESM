@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/layout :: head('สินค้าและอะไหล่')}"></head>
+  <body>
+    <aside th:replace="~{fragments/layout :: sidebar('products')}"></aside>
+    <div th:replace="~{fragments/layout :: overlay}"></div>
+    <div class="app-shell">
+      <header th:replace="~{fragments/layout :: topbar}"></header>
+      <main class="app-content">
+        <div th:replace="~{fragments/layout :: flash}"></div>
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">สินค้า / อะไหล่</h1>
+            <p class="page-subtitle">
+              จัดการข้อมูลสินค้า อะไหล่ และตรวจสอบจำนวนคงเหลือ
+            </p>
+          </div>
+          <button
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#productModal"
+          >
+            <i class="bi bi-plus-lg me-2"></i>เพิ่มสินค้า
+          </button>
+        </div>
+        <form class="card filter-bar">
+          <div class="input-group">
+            <span class="input-group-text bg-transparent"
+              ><i class="bi bi-search"></i></span
+            ><input
+              class="form-control"
+              name="q"
+              th:value="${q}"
+              placeholder="ค้นหารหัส ชื่อ หรือหมวดหมู่สินค้า"
+            /><button class="btn btn-outline-primary">ค้นหา</button>
+          </div>
+        </form>
+        <section class="card">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>รหัสสินค้า</th>
+                  <th>ชื่อสินค้า</th>
+                  <th>หมวดหมู่</th>
+                  <th>หน่วย</th>
+                  <th class="text-end">ต้นทุน</th>
+                  <th class="text-end">ราคาขาย</th>
+                  <th class="text-end">คงเหลือ</th>
+                  <th>ระดับสต๊อก</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="p:${products.content}">
+                  <td
+                    class="text-primary fw-bold"
+                    th:text="${p.productCode}"
+                  ></td>
+                  <td class="fw-semibold" th:text="${p.productName}"></td>
+                  <td th:text="${p.category}"></td>
+                  <td th:text="${p.unit}"></td>
+                  <td
+                    class="text-end"
+                    th:text="${#numbers.formatDecimal(p.costPrice,1,'COMMA',2,'POINT')}"
+                  ></td>
+                  <td
+                    class="text-end"
+                    th:text="${#numbers.formatDecimal(p.salePrice,1,'COMMA',2,'POINT')}"
+                  ></td>
+                  <td class="text-end fw-bold" th:text="${p.stockQty}"></td>
+                  <td>
+                    <span
+                      class="status-badge"
+                      th:classappend="${p.stockLevel=='NORMAL'?'status-COMPLETED':(p.stockLevel=='LOW_STOCK'?'status-WAITING_PART':'status-CANCELLED')}"
+                      th:text="${p.stockLevel=='NORMAL'?'ปกติ':(p.stockLevel=='LOW_STOCK'?'ใกล้หมด':'หมดสต๊อก')}"
+                    ></span>
+                  </td>
+                  <td>
+                    <form
+                      class="js-confirm"
+                      th:action="@{/products/{id}/toggle(id=${p.id})}"
+                      method="post"
+                    >
+                      <button
+                        class="btn btn-sm btn-outline-secondary"
+                        th:text="${p.active?'ปิด':'เปิด'}"
+                      ></button>
+                    </form>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+    <div class="modal fade" id="productModal">
+      <div class="modal-dialog modal-lg">
+        <form
+          class="modal-content"
+          th:action="@{/products}"
+          th:object="${productForm}"
+          method="post"
+        >
+          <div class="modal-header">
+            <h5 class="modal-title">เพิ่มสินค้า / อะไหล่</h5>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-8">
+                <label class="form-label required">ชื่อสินค้า</label
+                ><input
+                  class="form-control"
+                  th:field="*{productName}"
+                  required
+                />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">หมวดหมู่</label
+                ><input class="form-control" th:field="*{category}" />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">หน่วย</label
+                ><input class="form-control" th:field="*{unit}" />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">ราคาต้นทุน</label
+                ><input
+                  class="form-control"
+                  type="number"
+                  step="0.01"
+                  th:field="*{costPrice}"
+                />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">ราคาขาย</label
+                ><input
+                  class="form-control"
+                  type="number"
+                  step="0.01"
+                  th:field="*{salePrice}"
+                />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">สต๊อกเริ่มต้น</label
+                ><input
+                  class="form-control"
+                  type="number"
+                  step="0.01"
+                  th:field="*{openingStock}"
+                />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">จุดสั่งซื้อ</label
+                ><input
+                  class="form-control"
+                  type="number"
+                  step="0.01"
+                  th:field="*{minStock}"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary">บันทึกสินค้า</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+  </body>
+</html>

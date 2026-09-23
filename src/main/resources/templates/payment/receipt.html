@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+  <head
+    th:replace="~{fragments/layout :: head(${refundDocument?'ใบคืนเงิน':'ใบเสร็จรับเงิน'})}"
+  ></head>
+  <body class="receipt-page">
+    <div class="no-print d-flex justify-content-center gap-2 mb-3">
+      <button class="btn btn-primary" onclick="window.print()">
+        <i class="bi bi-printer me-2"></i>พิมพ์ / บันทึกเป็นไฟล์ PDF</button
+      ><button class="btn btn-outline-primary" onclick="downloadReceiptPng()">
+        <i class="bi bi-image me-2"></i>ดาวน์โหลดรูปภาพ PNG</button
+      ><button class="btn btn-outline-secondary" onclick="window.close()">
+        ปิด
+      </button>
+    </div>
+    <main id="receipt" class="receipt">
+      <header class="receipt-head">
+        <div>
+          <div class="public-brand fs-4">
+            <span class="brand-mark text-white"
+              ><i class="bi bi-briefcase-fill"></i></span
+            ><span>SME Service Manager</span>
+          </div>
+          <h1
+            class="h3 fw-bold mt-4"
+            th:text="${refundDocument?'ใบคืนเงิน':'ใบเสร็จรับเงิน'}"
+          ></h1>
+        </div>
+        <div class="text-end">
+          <h2 class="h5 fw-bold" th:text="${company['name']}"></h2>
+          <div class="small" th:text="${company['address']}"></div>
+          <div
+            class="small"
+            th:text="'เลขประจำตัวผู้เสียภาษี '+${company['taxId']}"
+          ></div>
+          <div class="small" th:text="'โทร '+${company['phone']}"></div>
+        </div>
+      </header>
+      <div class="row g-4 mt-2">
+        <div class="col-7">
+          <div class="text-muted small">รับจาก / คืนให้</div>
+          <h3
+            class="h5 fw-bold"
+            th:text="${document.job.customer.displayName}"
+          ></h3>
+          <div th:text="${document.job.customer.name}"></div>
+          <div th:text="${document.job.address}"></div>
+        </div>
+        <div class="col-5">
+          <table class="table table-sm">
+            <tr>
+              <td>เลขที่เอกสาร</td>
+              <td class="text-end fw-bold" th:text="${document.receiptNo}"></td>
+            </tr>
+            <tr>
+              <td>เลขที่ใบงาน</td>
+              <td class="text-end" th:text="${document.job.jobNo}"></td>
+            </tr>
+            <tr>
+              <td>วันที่</td>
+              <td
+                class="text-end"
+                th:text="${refundDocument?#temporals.format(document.refundDate,'dd/MM/yyyy HH:mm'):#temporals.format(document.paymentDate,'dd/MM/yyyy HH:mm')}"
+              ></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+      <table class="receipt-table">
+        <thead>
+          <tr>
+            <th>รายการ</th>
+            <th style="width: 180px">วิธี</th>
+            <th class="text-end" style="width: 180px">จำนวนเงิน</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td
+              th:text="${refundDocument?'คืนเงินค่าใช้บริการ':'รับชำระค่าบริการ '+document.job.title}"
+            ></td>
+            <td
+              th:text="${enumLabels[(refundDocument?document.refundMethod:document.paymentMethod).name()]}"
+            ></td>
+            <td
+              class="text-end"
+              th:text="${#numbers.formatDecimal(document.amount,1,'COMMA',2,'POINT')}"
+            ></td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="2" class="text-end">รวมทั้งสิ้น</th>
+            <th
+              class="text-end fs-5"
+              th:text="'฿'+${#numbers.formatDecimal(document.amount,1,'COMMA',2,'POINT')}"
+            ></th>
+          </tr>
+        </tfoot>
+      </table>
+      <div class="row mt-5 pt-5">
+        <div class="col-6 text-center">
+          <div class="border-top pt-2">ผู้รับเงิน / ผู้คืนเงิน</div>
+        </div>
+        <div class="col-6 text-center">
+          <div class="border-top pt-2">ผู้ชำระเงิน / ผู้รับเงินคืน</div>
+        </div>
+      </div>
+      <div class="mt-5 small text-muted">
+        หมายเหตุ: เอกสารฉบับนี้เป็นใบเสร็จรับเงิน/ใบคืนเงินทั่วไป
+        ไม่ใช่ใบกำกับภาษีอิเล็กทรอนิกส์
+      </div>
+    </main>
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+  </body>
+</html>

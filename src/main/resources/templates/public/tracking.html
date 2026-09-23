@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/layout :: head('ติดตามสถานะงานบริการ')}"></head>
+  <body class="public-body">
+    <nav class="public-nav">
+      <a class="public-brand" th:href="@{/}"
+        ><span class="brand-mark text-white"
+          ><i class="bi bi-briefcase-fill"></i></span
+        >SME Service Manager</a
+      ><a th:href="@{/}"
+        ><i class="bi bi-house-door-fill me-1"></i>กลับสู่เว็บไซต์หลัก</a
+      >
+    </nav>
+    <main class="tracking-shell">
+      <div class="mb-3">
+        <h1 class="page-title fs-3">
+          <i class="bi bi-clipboard2-check-fill text-primary me-2"></i
+          >ติดตามสถานะงานบริการ
+        </h1>
+        <p class="page-subtitle">
+          ตรวจสอบความคืบหน้างานบริการของคุณแบบเรียลไทม์
+        </p>
+      </div>
+      <section class="card">
+        <div class="card-body p-lg-4">
+          <div class="d-flex flex-wrap justify-content-between gap-2">
+            <div>
+              <strong class="text-primary fs-4" th:text="${job.jobNo}"></strong>
+              <h2 class="h4 fw-bold mt-2" th:text="${job.title}"></h2>
+              <div th:text="${job.customer.displayName}"></div>
+            </div>
+            <span
+              class="status-badge fs-6 align-self-start"
+              th:classappend="'status-'+${job.jobStatus}"
+              th:text="${statusLabels[job.jobStatus.name()]}"
+            ></span>
+          </div>
+          <div class="row g-3 mt-3">
+            <div class="col-md-4">
+              <div class="p-3 rounded-3 bg-primary bg-opacity-10 h-100">
+                <i class="bi bi-calendar3 text-primary me-2"></i
+                ><strong>วันนัดหมาย</strong>
+                <div
+                  class="mt-2"
+                  th:text="${#temporals.format(job.appointmentStart,'dd/MM/yyyy HH:mm')+' - '+#temporals.format(job.appointmentEnd,'HH:mm')}"
+                ></div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded-3 bg-primary bg-opacity-10 h-100">
+                <i class="bi bi-geo-alt-fill text-primary me-2"></i
+                ><strong>สถานที่</strong>
+                <div class="mt-2" th:text="${job.address}"></div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 rounded-3 bg-primary bg-opacity-10 h-100">
+                <i class="bi bi-person-fill text-primary me-2"></i
+                ><strong>หัวหน้าช่าง</strong>
+                <div
+                  class="mt-2"
+                  th:text="${job.technician != null ? job.technician.fullName : 'รอมอบหมาย'}"
+                ></div>
+              </div>
+            </div>
+          </div>
+          <div class="progress-track">
+            <div class="progress-step done">
+              <span class="progress-dot"><i class="bi bi-check"></i></span
+              >รับเรื่องแล้ว
+            </div>
+            <div
+              class="progress-step"
+              th:classappend="${job.jobStatus.name()!='NEW'}?'done'"
+            >
+              <span class="progress-dot"><i class="bi bi-check"></i></span
+              >นัดหมายแล้ว
+            </div>
+            <div
+              class="progress-step"
+              th:classappend="${job.jobStatus.name()=='ASSIGNED' or job.jobStatus.name()=='IN_PROGRESS' or job.jobStatus.name()=='WAITING_PART' or job.jobStatus.name()=='COMPLETED'}?'done'"
+            >
+              <span class="progress-dot"><i class="bi bi-check"></i></span
+              >ช่างรับงานแล้ว
+            </div>
+            <div
+              class="progress-step"
+              th:classappend="${job.jobStatus.name()=='IN_PROGRESS' or job.jobStatus.name()=='WAITING_PART' or job.jobStatus.name()=='COMPLETED'}?'done'"
+            >
+              <span class="progress-dot"><i class="bi bi-check"></i></span
+              >กำลังดำเนินการ
+            </div>
+            <div
+              class="progress-step"
+              th:classappend="${job.jobStatus.name()=='COMPLETED'}?'done'"
+            >
+              <span class="progress-dot"><i class="bi bi-check"></i></span
+              >เสร็จสิ้น
+            </div>
+          </div>
+          <div th:if="${job.jobStatus.name()=='COMPLETED'}">
+            <h3 class="h5 fw-bold">ภาพหลังการให้บริการ</h3>
+            <div class="attachment-grid">
+              <a
+                class="attachment-thumb"
+                th:each="a:${job.attachments}"
+                th:if="${a.attachmentType.name()=='AFTER' and a.image}"
+                th:href="@{/track/{token}/attachments/{id}(token=${job.publicToken},id=${a.id})}"
+                target="_blank"
+                ><img th:src="@{/track/{token}/attachments/{id}(token=${job.publicToken},id=${a.id})}"
+              /></a>
+            </div>
+            <div class="alert alert-success mt-4">
+              <i class="bi bi-check-circle-fill me-2"></i
+              ><strong>งานบริการเสร็จสิ้น</strong>
+              <div>ขอบคุณที่ใช้บริการ SME Service Manager</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+  </body>
+</html>

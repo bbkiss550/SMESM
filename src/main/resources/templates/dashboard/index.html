@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/layout :: head('แดชบอร์ด')}"></head>
+  <body>
+    <aside th:replace="~{fragments/layout :: sidebar('dashboard')}"></aside>
+    <div th:replace="~{fragments/layout :: overlay}"></div>
+    <div class="app-shell">
+      <header th:replace="~{fragments/layout :: topbar}"></header>
+      <main class="app-content">
+        <div th:replace="~{fragments/layout :: flash}"></div>
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">แดชบอร์ด</h1>
+            <p class="page-subtitle">ภาพรวมงานบริการของวันนี้</p>
+          </div>
+          <div class="text-muted">
+            <i class="bi bi-calendar3 me-2"></i
+            ><span
+              th:text="${todayLabel}"
+              >22 กันยายน 2026</span
+            >
+          </div>
+        </div>
+        <section class="kpi-grid">
+          <article class="card kpi-card">
+            <span class="kpi-icon"><i class="bi bi-clipboard2-check"></i></span>
+            <div>
+              <div class="kpi-label">งานทั้งหมด</div>
+              <div class="kpi-value" th:text="${summary.totalJobs}">128</div>
+              <div class="kpi-trend">▲ ข้อมูลทั้งหมด</div>
+            </div>
+          </article>
+          <article class="card kpi-card">
+            <span class="kpi-icon"><i class="bi bi-calendar-event"></i></span>
+            <div>
+              <div class="kpi-label">งานวันนี้</div>
+              <div class="kpi-value" th:text="${summary.todayJobs}">14</div>
+              <div class="kpi-trend">กำหนดวันนี้</div>
+            </div>
+          </article>
+          <article class="card kpi-card">
+            <span class="kpi-icon"
+              ><i class="bi bi-gear-wide-connected"></i
+            ></span>
+            <div>
+              <div class="kpi-label">กำลังดำเนินการ</div>
+              <div class="kpi-value" th:text="${summary.inProgress}">12</div>
+              <div class="kpi-trend">งานที่กำลังทำ</div>
+            </div>
+          </article>
+          <article class="card kpi-card">
+            <span class="kpi-icon"><i class="bi bi-clock"></i></span>
+            <div>
+              <div class="kpi-label">รอนัดหมาย</div>
+              <div class="kpi-value" th:text="${summary.scheduled}">8</div>
+              <div class="kpi-trend">รอดำเนินการ</div>
+            </div>
+          </article>
+          <article class="card kpi-card">
+            <span class="kpi-icon"><i class="bi bi-check-circle"></i></span>
+            <div>
+              <div class="kpi-label">เสร็จเดือนนี้</div>
+              <div class="kpi-value" th:text="${summary.completedMonth}">
+                47
+              </div>
+              <div class="kpi-trend">▲ เดือนปัจจุบัน</div>
+            </div>
+          </article>
+          <article class="card kpi-card">
+            <span class="kpi-icon"><i class="bi bi-cash-stack"></i></span>
+            <div>
+              <div class="kpi-label">รายได้เดือนนี้</div>
+              <div
+                class="kpi-value fs-4"
+                th:text="'฿'+${#numbers.formatDecimal(summary.revenueMonth,1,'COMMA',0,'POINT')}"
+              >
+                ฿186,500
+              </div>
+              <div class="kpi-trend">ยอดรับเงินจริง</div>
+            </div>
+          </article>
+        </section>
+        <div class="row g-3 mb-3">
+          <div class="col-xl-5">
+            <section class="card chart-card">
+              <div class="card-header d-flex justify-content-between">
+                <h2 class="section-title">
+                  <i class="bi bi-bar-chart-fill text-primary me-2"></i
+                  >จำนวนงานรายเดือน
+                </h2>
+                <small class="text-muted">6 เดือนล่าสุด</small>
+              </div>
+              <div class="card-body">
+                <div class="chart-wrap"><canvas id="jobsChart"></canvas></div>
+              </div>
+            </section>
+          </div>
+          <div class="col-xl-4">
+            <section class="card chart-card">
+              <div class="card-header">
+                <h2 class="section-title">
+                  <i class="bi bi-graph-up-arrow text-primary me-2"></i
+                  >รายได้รายเดือน
+                </h2>
+              </div>
+              <div class="card-body">
+                <div class="chart-wrap">
+                  <canvas id="revenueChart"></canvas>
+                </div>
+              </div>
+            </section>
+          </div>
+          <div class="col-xl-3">
+            <section class="card chart-card">
+              <div class="card-header">
+                <h2 class="section-title">
+                  <i class="bi bi-pie-chart-fill text-primary me-2"></i
+                  >บริการยอดนิยม
+                </h2>
+              </div>
+              <div class="card-body">
+                <div class="chart-wrap">
+                  <canvas id="serviceChart"></canvas>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+        <section class="card">
+          <div
+            class="card-header d-flex justify-content-between align-items-center"
+          >
+            <h2 class="section-title">
+              <i class="bi bi-list-task text-primary me-2"></i>งานล่าสุด
+            </h2>
+            <a th:href="@{/jobs}"
+              >ดูทั้งหมด <i class="bi bi-chevron-right"></i
+            ></a>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>เลขที่ใบงาน</th>
+                  <th>ลูกค้า</th>
+                  <th>งาน</th>
+                  <th>หัวหน้าช่าง</th>
+                  <th>สถานะ</th>
+                  <th>นัดหมาย</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="job:${recentJobs}">
+                  <td>
+                    <a
+                      class="fw-bold"
+                      th:href="@{/jobs/{id}(id=${job.id})}"
+                      th:text="${job.jobNo}"
+                    ></a>
+                  </td>
+                  <td th:text="${job.customer.displayName}"></td>
+                  <td th:text="${job.title}"></td>
+                  <td
+                    th:text="${job.technician != null ? job.technician.fullName : '-'}"
+                  ></td>
+                  <td>
+                    <span
+                      class="status-badge"
+                      th:classappend="'status-'+${job.jobStatus}"
+                      th:text="${statusLabels[job.jobStatus.name()]}"
+                    ></span>
+                  </td>
+                  <td
+                    th:text="${#temporals.format(job.appointmentStart,'dd/MM/yyyy HH:mm')}"
+                  ></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+    <script th:inline="javascript">
+      const jobs=[[${monthlyJobs}]],revenue=[[${monthlyRevenue}]],services=[[${popularServices}]];const common={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(120,140,170,.12)'}},x:{grid:{display:false}}}};new Chart(document.getElementById('jobsChart'),{type:'bar',data:{labels:jobs.map(x=>x.month),datasets:[{data:jobs.map(x=>x.value),backgroundColor:'#258cff',borderRadius:6}]},options:common});new Chart(document.getElementById('revenueChart'),{type:'line',data:{labels:revenue.map(x=>x.month),datasets:[{data:revenue.map(x=>x.value),borderColor:'#0aa7b8',backgroundColor:'rgba(10,167,184,.12)',fill:true,tension:.35}]},options:common});new Chart(document.getElementById('serviceChart'),{type:'doughnut',data:{labels:services.map(x=>x.label),datasets:[{data:services.map(x=>x.value),backgroundColor:['#0878f9','#0fb5ae','#f59e0b','#8b5cf6','#94a3b8'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{boxWidth:10}}}}});
+    </script>
+  </body>
+</html>

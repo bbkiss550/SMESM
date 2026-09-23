@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/layout :: head('ตั้งค่า')}"></head>
+  <body>
+    <aside th:replace="~{fragments/layout :: sidebar('settings')}"></aside>
+    <div th:replace="~{fragments/layout :: overlay}"></div>
+    <div class="app-shell">
+      <header th:replace="~{fragments/layout :: topbar}"></header>
+      <main class="app-content">
+        <div th:replace="~{fragments/layout :: flash}"></div>
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">ตั้งค่า</h1>
+            <p class="page-subtitle">ปรับแต่งระบบให้เหมาะกับองค์กรของคุณ</p>
+          </div>
+        </div>
+        <form th:action="@{/settings}" method="post">
+          <div class="row g-3">
+            <div class="col-lg-7">
+              <section class="card mb-3">
+                <div class="card-header">
+                  <h2 class="section-title">
+                    <i class="bi bi-building text-primary me-2"></i>ข้อมูลบริษัท
+                  </h2>
+                </div>
+                <div class="card-body">
+                  <div class="row g-3">
+                    <div class="col-md-7">
+                      <label class="form-label">ชื่อบริษัท</label
+                      ><input
+                        class="form-control"
+                        name="company.name"
+                        th:value="${settings['company.name']}"
+                      />
+                    </div>
+                    <div class="col-md-5">
+                      <label class="form-label">เลขประจำตัวผู้เสียภาษี</label
+                      ><input
+                        class="form-control"
+                        name="company.taxId"
+                        th:value="${settings['company.taxId']}"
+                      />
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label">ที่อยู่</label
+                      ><textarea
+                        class="form-control"
+                        name="company.address"
+                        th:text="${settings['company.address']}"
+                      ></textarea>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">โทรศัพท์</label
+                      ><input
+                        class="form-control"
+                        name="company.phone"
+                        th:value="${settings['company.phone']}"
+                      />
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">อีเมล</label
+                      ><input
+                        class="form-control"
+                        name="company.email"
+                        th:value="${settings['company.email']}"
+                      />
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">เว็บไซต์</label
+                      ><input
+                        class="form-control"
+                        name="company.website"
+                        th:value="${settings['company.website']}"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </section>
+              <section class="card">
+                <div class="card-header">
+                  <h2 class="section-title">
+                    <i class="bi bi-bell text-primary me-2"></i>การแจ้งเตือน
+                  </h2>
+                </div>
+                <div class="card-body d-grid gap-3">
+                  <label class="d-flex justify-content-between"
+                    ><span>แจ้งเตือนงานใหม่</span
+                    ><input
+                      type="hidden"
+                      name="notification.newJob"
+                      value="false" /><input
+                      class="form-check-input"
+                      type="checkbox"
+                      name="notification.newJob"
+                      value="true"
+                      th:checked="${settings['notification.newJob']=='true'}" /></label
+                  ><label class="d-flex justify-content-between"
+                    ><span>แจ้งเตือนใกล้ครบกำหนด</span
+                    ><input
+                      type="hidden"
+                      name="notification.appointment"
+                      value="false" /><input
+                      class="form-check-input"
+                      type="checkbox"
+                      name="notification.appointment"
+                      value="true"
+                      th:checked="${settings['notification.appointment']=='true'}" /></label
+                  ><label class="d-flex justify-content-between"
+                    ><span>แจ้งเตือนการชำระเงิน</span
+                    ><input
+                      type="hidden"
+                      name="notification.payment"
+                      value="false" /><input
+                      class="form-check-input"
+                      type="checkbox"
+                      name="notification.payment"
+                      value="true"
+                      th:checked="${settings['notification.payment']=='true'}" /></label
+                  ><label class="d-flex justify-content-between"
+                    ><span>สรุปรายงานประจำวัน</span
+                    ><input
+                      type="hidden"
+                      name="notification.dailySummary"
+                      value="false" /><input
+                      class="form-check-input"
+                      type="checkbox"
+                      name="notification.dailySummary"
+                      value="true"
+                      th:checked="${settings['notification.dailySummary']=='true'}"
+                  /></label>
+                </div>
+              </section>
+            </div>
+            <div class="col-lg-5">
+              <section class="card mb-3">
+                <div class="card-header">
+                  <h2 class="section-title">
+                    <i class="bi bi-receipt text-primary me-2"></i
+                    >ภาษีมูลค่าเพิ่ม
+                  </h2>
+                </div>
+                <div class="card-body">
+                  <label class="d-flex justify-content-between mb-3"
+                    ><span>เปิดใช้ภาษีมูลค่าเพิ่มแบบรวมในราคา</span
+                    ><input
+                      type="hidden"
+                      name="tax.enabled"
+                      value="false" /><input
+                      class="form-check-input"
+                      type="checkbox"
+                      name="tax.enabled"
+                      value="true"
+                      th:checked="${settings['tax.enabled']=='true'}" /></label
+                  ><label class="form-label">อัตราภาษีมูลค่าเพิ่ม (%)</label
+                  ><input
+                    class="form-control"
+                    type="number"
+                    step="0.01"
+                    name="tax.rate"
+                    th:value="${settings['tax.rate']}"
+                  /><small class="text-muted"
+                    >ระบบถอดภาษีมูลค่าเพิ่มจากยอดสุทธิ ไม่บวกเพิ่มจากลูกค้า</small
+                  >
+                </div>
+              </section>
+              <section class="card mb-3">
+                <div class="card-header">
+                  <h2 class="section-title">
+                    <i class="bi bi-line text-success me-2"></i>การเชื่อมต่อ LINE OA
+                  </h2>
+                </div>
+                <div class="card-body">
+                  <div class="alert alert-light border">
+                    <span class="text-danger fw-bold">● ยังไม่เชื่อมต่อ</span>
+                    <p class="small text-muted mb-0">
+                      การเชื่อมต่อจริงยังไม่อยู่ในขอบเขตรุ่นนี้
+                    </p>
+                  </div>
+                  <button class="btn btn-success" type="button" disabled>
+                    เชื่อมต่อ LINE OA
+                  </button>
+                </div>
+              </section>
+              <section class="card">
+                <div class="card-header">
+                  <h2 class="section-title">
+                    <i class="bi bi-palette text-primary me-2"></i>รูปแบบการแสดงผล
+                  </h2>
+                </div>
+                <div class="card-body">
+                  <p class="text-muted">
+                    เลือกรูปแบบการแสดงผล ระบบจะจำค่าไว้ในอุปกรณ์นี้
+                  </p>
+                  <button
+                    class="btn btn-outline-primary w-100"
+                    type="button"
+                    data-theme-toggle
+                  >
+                    <i class="bi bi-moon-stars me-2"></i>สลับโหมดสว่าง / โหมดมืด
+                  </button>
+                </div>
+              </section>
+            </div>
+          </div>
+          <div class="d-flex justify-content-end mt-3">
+            <button class="btn btn-primary px-4">
+              <i class="bi bi-floppy me-2"></i>บันทึกการเปลี่ยนแปลง
+            </button>
+          </div>
+        </form>
+      </main>
+    </div>
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+  </body>
+</html>

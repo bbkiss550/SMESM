@@ -1,0 +1,772 @@
+<!doctype html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/layout :: head('รายละเอียดใบงาน')}"></head>
+  <body>
+    <aside th:replace="~{fragments/layout :: sidebar('jobs')}"></aside>
+    <div th:replace="~{fragments/layout :: overlay}"></div>
+    <div class="app-shell">
+      <header th:replace="~{fragments/layout :: topbar}"></header>
+      <main class="app-content">
+        <div th:replace="~{fragments/layout :: flash}"></div>
+        <div class="page-header">
+          <div>
+            <a th:href="@{/jobs}" class="small"
+              ><i class="bi bi-chevron-left"></i> งานบริการ</a
+            >
+            <h1 class="page-title mt-2">รายละเอียดใบงาน</h1>
+            <p class="page-subtitle">
+              ข้อมูลรายละเอียดงานบริการและการดำเนินงาน
+            </p>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <button
+              th:if="${job.jobStatus.name()=='NEW' or job.jobStatus.name()=='SCHEDULED' or job.jobStatus.name()=='ASSIGNED'}"
+              class="btn btn-outline-primary"
+              data-bs-toggle="modal"
+              data-bs-target="#assignModal"
+            >
+              <i class="bi bi-person-check me-1"></i>
+              <span th:text="${job.technician == null ? 'มอบหมายหัวหน้าช่าง' : 'เปลี่ยนหัวหน้าช่าง'}"></span>
+            </button>
+            <form
+              th:if="${job.jobStatus.name()=='ASSIGNED'}"
+              th:action="@{/jobs/{id}/status(id=${job.id})}"
+              method="post"
+            >
+              <input type="hidden" name="status" value="IN_PROGRESS" /><button
+                class="btn btn-primary"
+              >
+                <i class="bi bi-play-fill me-1"></i>เริ่มงาน
+              </button>
+            </form>
+            <button
+              th:if="${job.jobStatus.name()!='COMPLETED' and job.jobStatus.name()!='CANCELLED'}"
+              class="btn btn-outline-primary"
+              data-bs-toggle="modal"
+              data-bs-target="#attachmentModal"
+            >
+              <i class="bi bi-camera me-1"></i>เพิ่มรูปภาพ</button
+            ><button
+              th:if="${job.jobStatus.name()!='COMPLETED' and job.jobStatus.name()!='CANCELLED'}"
+              class="btn btn-outline-primary"
+              data-bs-toggle="modal"
+              data-bs-target="#itemModal"
+            >
+              <i class="bi bi-plus-circle me-1"></i>เพิ่มรายการ
+            </button>
+            <form
+              class="js-confirm"
+              th:if="${job.jobStatus.name()=='IN_PROGRESS'}"
+              th:action="@{/jobs/{id}/status(id=${job.id})}"
+              method="post"
+              data-confirm-title="ยืนยันปิดงาน?"
+            >
+              <input type="hidden" name="status" value="COMPLETED" /><button
+                class="btn btn-success"
+              >
+                <i class="bi bi-check-lg me-1"></i>ปิดงาน
+              </button>
+            </form>
+            <a
+              class="btn btn-outline-secondary"
+              th:href="@{/jobs/new(originalJobId=${job.id},customerId=${job.customer.id})}"
+              th:if="${job.jobStatus.name()=='COMPLETED'}"
+              ><i class="bi bi-arrow-repeat me-1"></i>เปิดงานแก้</a
+            >
+            <button
+              th:if="${job.jobStatus.name()!='COMPLETED' and job.jobStatus.name()!='CANCELLED'}"
+              class="btn btn-outline-danger"
+              data-bs-toggle="modal"
+              data-bs-target="#cancelModal"
+            >
+              <i class="bi bi-x-circle me-1"></i>ยกเลิกงาน
+            </button>
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="d-grid gap-3">
+            <section class="card">
+              <div
+                class="card-header d-flex justify-content-between align-items-center"
+              >
+                <h2 class="section-title">
+                  <i class="bi bi-file-earmark-text-fill text-primary me-2"></i
+                  >ข้อมูลใบงาน
+                </h2>
+                <div class="d-flex gap-2">
+                  <span
+                    class="status-badge"
+                    th:classappend="'status-'+${job.jobStatus}"
+                    th:text="${statusLabels[job.jobStatus.name()]}"
+                  ></span
+                  ><span
+                    class="status-badge priority-URGENT"
+                    th:if="${job.priority.name()=='URGENT'}"
+                    ><i class="bi bi-fire"></i>ด่วน</span
+                  >
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="info-grid">
+                  <div class="info-block">
+                    <div class="info-label">เลขที่ใบงาน</div>
+                    <div
+                      class="fs-4 fw-bold text-primary"
+                      th:text="${job.jobNo}"
+                    ></div>
+                    <div class="info-label mt-3">ลูกค้า</div>
+                    <div
+                      class="info-value"
+                      th:text="${job.customer.displayName}"
+                    ></div>
+                    <a
+                      class="small"
+                      th:href="'tel:'+${job.contactPhone}"
+                      th:text="${job.contactPhone}"
+                    ></a>
+                  </div>
+                  <div class="info-block">
+                    <div class="info-label">บริการ</div>
+                    <div
+                      class="info-value"
+                      th:text="${job.service.serviceName}"
+                    ></div>
+                    <div class="info-label mt-3">หัวข้องาน</div>
+                    <div class="info-value" th:text="${job.title}"></div>
+                    <div
+                      class="small text-muted mt-1"
+                      th:text="${job.description}"
+                    ></div>
+                    <div class="info-label mt-3">นัดหมาย</div>
+                    <div
+                      class="info-value"
+                      th:text="${#temporals.format(job.appointmentStart,'dd/MM/yyyy HH:mm')+' - '+#temporals.format(job.appointmentEnd,'dd/MM/yyyy HH:mm')}"
+                    ></div>
+                  </div>
+                  <div class="info-block">
+                    <div class="info-label">หัวหน้าช่าง</div>
+                    <div
+                      class="info-value"
+                      th:text="${job.technician != null ? job.technician.fullName : 'ยังไม่มอบหมาย'}"
+                    ></div>
+                    <div class="info-label mt-3">สถานที่ให้บริการ</div>
+                    <div class="info-value" th:text="${job.address}"></div>
+                    <div class="mt-3" th:if="${job.jobType.name()=='REWORK'}">
+                      <span class="badge text-bg-warning">งานแก้</span>
+                      <div
+                        class="small mt-1"
+                        th:text="${job.reworkReason}"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section class="card">
+              <div
+                class="card-header d-flex justify-content-between align-items-center"
+              >
+                <h2 class="section-title">
+                  <i class="bi bi-list-ul text-primary me-2"></i
+                  >รายการค่าใช้จ่าย
+                </h2>
+                <button
+                  th:if="${job.jobStatus.name()!='COMPLETED' and job.jobStatus.name()!='CANCELLED'}"
+                  class="btn btn-sm btn-outline-primary"
+                  data-bs-toggle="modal"
+                  data-bs-target="#itemModal"
+                >
+                  <i class="bi bi-plus-lg"></i> เพิ่มรายการ
+                </button>
+              </div>
+              <div class="table-responsive">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>รายการ</th>
+                      <th>ประเภท</th>
+                      <th class="text-end">จำนวน</th>
+                      <th>หน่วย</th>
+                      <th class="text-end">ราคาต่อหน่วย</th>
+                      <th class="text-end">จำนวนเงิน</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr th:each="item,st:${job.items}" th:if="${item.active}">
+                      <td th:text="${st.count}"></td>
+                      <td th:text="${item.description}"></td>
+                      <td>
+                        <span
+                          class="badge text-bg-light"
+                          th:text="${enumLabels[item.itemType.name()]}"
+                        ></span>
+                      </td>
+                      <td class="text-end" th:text="${item.quantity}"></td>
+                      <td th:text="${item.unit}"></td>
+                      <td
+                        class="text-end"
+                        th:text="${#numbers.formatDecimal(item.unitPrice,1,'COMMA',2,'POINT')}"
+                      ></td>
+                      <td
+                        class="text-end fw-semibold"
+                        th:text="${#numbers.formatDecimal(item.total,1,'COMMA',2,'POINT')}"
+                      ></td>
+                      <td>
+                        <form
+                          class="js-confirm"
+                          th:if="${job.jobStatus.name()!='COMPLETED' and job.jobStatus.name()!='CANCELLED'}"
+                          th:action="@{/jobs/{j}/items/{i}/remove(j=${job.id},i=${item.id})}"
+                          method="post"
+                        >
+                          <button class="btn btn-sm text-danger">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        </form>
+                      </td>
+                    </tr>
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colspan="6" class="text-end">รวมเป็นเงิน</td>
+                      <td
+                        class="text-end fw-bold"
+                        th:text="${#numbers.formatDecimal(job.subtotal,1,'COMMA',2,'POINT')}"
+                      ></td>
+                      <td></td>
+                    </tr>
+                    <tr>
+                      <td colspan="6" class="text-end">ส่วนลด</td>
+                      <td
+                        class="text-end"
+                        th:text="${#numbers.formatDecimal(job.discount,1,'COMMA',2,'POINT')}"
+                      ></td>
+                      <td></td>
+                    </tr>
+                    <tr>
+                      <td colspan="6" class="text-end text-primary fw-bold">
+                        ยอดรวมทั้งสิ้น
+                      </td>
+                      <td
+                        class="text-end text-primary fs-5 fw-bold"
+                        th:text="${#numbers.formatDecimal(job.grandTotal,1,'COMMA',2,'POINT')}"
+                      ></td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </section>
+            <section class="card">
+              <div class="card-header d-flex justify-content-between">
+                <h2 class="section-title">
+                  <i class="bi bi-camera-fill text-primary me-2"></i
+                  >รูปภาพหน้างาน
+                </h2>
+                <button
+                  th:if="${job.jobStatus.name()!='COMPLETED' and job.jobStatus.name()!='CANCELLED'}"
+                  class="btn btn-sm btn-outline-primary"
+                  data-bs-toggle="modal"
+                  data-bs-target="#attachmentModal"
+                >
+                  เพิ่มรูป
+                </button>
+              </div>
+              <div class="card-body">
+                <div class="attachment-grid">
+                  <a
+                    class="attachment-thumb"
+                    th:each="a:${job.attachments}"
+                    th:href="@{/jobs/attachments/{id}(id=${a.id})}"
+                    target="_blank"
+                    ><img
+                      th:if="${a.image}"
+                      th:src="@{/jobs/attachments/{id}(id=${a.id})}"
+                      th:alt="${a.originalFileName}" /><span
+                      th:unless="${a.image}"
+                      class="d-grid h-100 place-items-center p-3 text-center"
+                      ><i class="bi bi-file-earmark-pdf fs-2"></i
+                      ><small th:text="${a.originalFileName}"></small></span
+                    ><span
+                      class="position-absolute bottom-0 start-0 badge text-bg-dark m-2"
+                      th:text="${enumLabels[a.attachmentType.name()]}"
+                    ></span
+                  ></a>
+                  <div
+                    class="empty-state py-3"
+                    th:if="${#lists.isEmpty(job.attachments)}"
+                  >
+                    <i class="bi bi-images"></i>ยังไม่มีรูปภาพ
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+          <aside class="d-grid gap-3 align-content-start">
+            <section class="card">
+              <div class="card-header d-flex justify-content-between">
+                <h2 class="section-title">
+                  <i class="bi bi-clock-history text-primary me-2"></i
+                  >ประวัติการดำเนินงาน
+                </h2>
+              </div>
+              <div class="card-body">
+                <div class="timeline">
+                  <div class="timeline-item" th:each="a:${job.activities}">
+                    <strong th:text="${a.description}"></strong>
+                    <div
+                      class="small text-muted"
+                      th:text="${#temporals.format(a.activityDate,'dd/MM/yyyy HH:mm')}"
+                    ></div>
+                    <small
+                      th:if="${a.user != null}"
+                      th:text="'โดย '+${a.user.fullName}"
+                    ></small>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section class="card">
+              <div class="card-header">
+                <h2 class="section-title">
+                  <i class="bi bi-wallet2 text-primary me-2"></i>สรุปการชำระเงิน
+                </h2>
+              </div>
+              <div class="card-body">
+                <div class="money-summary">
+                  <div class="money-row">
+                    <span>ยอดรวมทั้งสิ้น</span
+                    ><strong
+                      th:text="'฿'+${#numbers.formatDecimal(job.grandTotal,1,'COMMA',2,'POINT')}"
+                    ></strong>
+                  </div>
+                  <div class="money-row text-success">
+                    <span>รับชำระแล้ว</span
+                    ><strong
+                      th:text="'฿'+${#numbers.formatDecimal(paid,1,'COMMA',2,'POINT')}"
+                    ></strong>
+                  </div>
+                  <div
+                    class="money-row text-warning"
+                    th:if="${refunded.signum()>0}"
+                  >
+                    <span>คืนเงินแล้ว</span
+                    ><strong
+                      th:text="'฿'+${#numbers.formatDecimal(refunded,1,'COMMA',2,'POINT')}"
+                    ></strong>
+                  </div>
+                  <div class="money-row money-total">
+                    <span>ยอดคงเหลือ</span
+                    ><strong
+                      class="text-danger"
+                      th:text="'฿'+${#numbers.formatDecimal(job.grandTotal.subtract(paid),1,'COMMA',2,'POINT')}"
+                    ></strong>
+                  </div>
+                  <div>
+                    <span
+                      class="status-badge"
+                      th:classappend="'status-'+${job.paymentStatus}"
+                      th:text="${statusLabels[job.paymentStatus.name()]}"
+                    ></span>
+                  </div>
+                </div>
+                <div class="d-grid gap-2 mt-3">
+                  <button
+                    class="btn btn-outline-primary"
+                    th:if="${job.jobStatus.name()!='CANCELLED' and paid.compareTo(job.grandTotal)<0}"
+                    data-bs-toggle="modal"
+                    data-bs-target="#paymentModal"
+                  >
+                    <i class="bi bi-credit-card me-1"></i
+                    >บันทึกการชำระเงิน</button
+                  ><button
+                    class="btn btn-outline-warning"
+                    th:if="${paid.subtract(refunded).signum()>0}"
+                    data-bs-toggle="modal"
+                    data-bs-target="#refundModal"
+                  >
+                    <i class="bi bi-arrow-counterclockwise me-1"></i>คืนเงิน
+                  </button>
+                </div>
+              </div>
+              <div class="list-group list-group-flush">
+                <a
+                  class="list-group-item list-group-item-action"
+                  th:each="p:${payments}"
+                  th:href="@{/payments/{id}/receipt(id=${p.id})}"
+                  target="_blank"
+                  ><div class="d-flex justify-content-between">
+                    <strong th:text="${p.receiptNo}"></strong
+                    ><span
+                      th:text="'฿'+${#numbers.formatDecimal(p.amount,1,'COMMA',2,'POINT')}"
+                    ></span>
+                  </div>
+                  <small
+                    class="text-muted"
+                    th:text="${#temporals.format(p.paymentDate,'dd/MM/yyyy HH:mm')}"
+                  ></small
+                ></a>
+              </div>
+            </section>
+            <section class="card">
+              <div class="card-body">
+                <div class="small text-muted">ลิงก์ติดตามงานสำหรับลูกค้า</div>
+                <a
+                  class="small text-break"
+                  th:href="@{/track/{token}(token=${job.publicToken})}"
+                  target="_blank"
+                  th:text="${'/track/'+job.publicToken}"
+                ></a>
+              </div>
+            </section>
+          </aside>
+        </div>
+      </main>
+    </div>
+    <div class="modal fade" id="itemModal">
+      <div class="modal-dialog">
+        <form
+          class="modal-content"
+          th:action="@{/jobs/{id}/items(id=${job.id})}"
+          th:object="${itemForm}"
+          method="post"
+        >
+          <div class="modal-header">
+            <h5 class="modal-title">เพิ่มรายการค่าใช้จ่าย</h5>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">ประเภท</label
+              ><select class="form-select" th:field="*{itemType}">
+                <option value="PRODUCT">อะไหล่/สินค้า</option>
+                <option value="SERVICE">ค่าบริการ</option>
+                <option value="OTHER">อื่น ๆ</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">สินค้า/อะไหล่</label
+              ><select
+                class="form-select"
+                th:field="*{productId}"
+                data-product-select
+                data-searchable-select
+                data-search-placeholder="ค้นหาสินค้าหรืออะไหล่..."
+                data-price-target="#itemPrice"
+                data-unit-target="#itemUnit"
+              >
+                <option value="">เลือกสินค้า</option>
+                <option
+                  th:each="p:${products}"
+                  th:value="${p.id}"
+                  th:text="${p.productCode+' · '+p.productName+' (คงเหลือ '+p.stockQty+')'}"
+                  th:data-price="${p.salePrice}"
+                  th:data-unit="${p.unit}"
+                ></option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">รายละเอียด (กรณีไม่ใช่สินค้า)</label
+              ><input class="form-control" th:field="*{description}" />
+            </div>
+            <div class="row g-2">
+              <div class="col-4">
+                <label class="form-label">จำนวน</label
+                ><input
+                  class="form-control"
+                  type="number"
+                  step="0.01"
+                  th:field="*{quantity}"
+                />
+              </div>
+              <div class="col-4">
+                <label class="form-label">หน่วย</label
+                ><input id="itemUnit" class="form-control" th:field="*{unit}" />
+              </div>
+              <div class="col-4">
+                <label class="form-label">ราคาต่อหน่วย</label
+                ><input
+                  id="itemPrice"
+                  class="form-control"
+                  type="number"
+                  step="0.01"
+                  th:field="*{unitPrice}"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              class="btn btn-outline-secondary"
+              data-bs-dismiss="modal"
+              type="button"
+            >
+              ยกเลิก</button
+            ><button class="btn btn-primary">เพิ่มรายการ</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="modal fade" id="assignModal">
+      <div class="modal-dialog">
+        <form
+          class="modal-content"
+          th:action="@{/jobs/{id}/assign(id=${job.id})}"
+          method="post"
+        >
+          <div class="modal-header">
+            <h5 class="modal-title">มอบหมายหัวหน้าช่าง</h5>
+            <button class="btn-close" data-bs-dismiss="modal" type="button"></button>
+          </div>
+          <div class="modal-body">
+            <label class="form-label required" for="technicianId">หัวหน้าช่าง</label>
+            <select
+              class="form-select"
+              id="technicianId"
+              name="technicianId"
+              data-searchable-select
+              data-search-placeholder="ค้นหาหัวหน้าช่าง..."
+              required
+            >
+              <option value="">เลือกหัวหน้าช่าง</option>
+              <option
+                th:each="technician : ${technicians}"
+                th:value="${technician.id}"
+                th:text="${technician.fullName}"
+                th:selected="${job.technician != null and job.technician.id == technician.id}"
+              ></option>
+            </select>
+            <small class="text-muted d-block mt-2">ระบบจะตรวจสอบงานซ้อนตามช่วงเวลานัดหมายก่อนบันทึก</small>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">ยกเลิก</button>
+            <button class="btn btn-primary">ยืนยันการมอบหมาย</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="modal fade" id="attachmentModal">
+      <div class="modal-dialog">
+        <form
+          class="modal-content"
+          th:action="@{/jobs/{id}/attachments(id=${job.id})}"
+          method="post"
+          enctype="multipart/form-data"
+        >
+          <div class="modal-header">
+            <h5 class="modal-title">เพิ่มรูปภาพหรือเอกสาร</h5>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <label class="form-label">ประเภทไฟล์</label
+            ><select class="form-select mb-3" name="type">
+              <option value="BEFORE">ก่อนดำเนินการ</option>
+              <option value="DURING">ระหว่างดำเนินการ</option>
+              <option value="AFTER">หลังดำเนินการ</option>
+              <option value="DOCUMENT">เอกสาร</option></select
+            ><input
+              class="form-control"
+              type="file"
+              name="file"
+              accept=".jpg,.jpeg,.png,.pdf"
+              required
+            /><small class="text-muted">JPG, PNG หรือ PDF ไม่เกิน 10 MB</small>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary">อัปโหลด</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="modal fade" id="paymentModal">
+      <div class="modal-dialog">
+        <form
+          class="modal-content"
+          th:action="@{/jobs/{id}/payments(id=${job.id})}"
+          th:object="${paymentForm}"
+          method="post"
+        >
+          <div class="modal-header">
+            <h5 class="modal-title">บันทึกการชำระเงิน</h5>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">ประเภทการชำระ</label
+              ><select class="form-select" th:field="*{paymentType}">
+                <option value="DEPOSIT">มัดจำ</option>
+                <option value="BALANCE">ชำระยอดคงเหลือ</option>
+                <option value="FULL">ชำระเต็มจำนวน</option>
+                <option value="OTHER">อื่น ๆ</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">จำนวนเงิน</label
+              ><input
+                class="form-control"
+                type="number"
+                step="0.01"
+                th:field="*{amount}"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">วิธีชำระ</label
+              ><select class="form-select" th:field="*{paymentMethod}">
+                <option value="CASH">เงินสด</option>
+                <option value="TRANSFER">โอนเงิน</option>
+                <option value="PROMPTPAY">พร้อมเพย์</option>
+                <option value="CREDIT_CARD">บัตรเครดิต</option>
+                <option value="OTHER">อื่น ๆ</option>
+              </select>
+            </div>
+            <div class="mb-3" data-thai-datetime-group>
+              <input
+                type="hidden"
+                th:field="*{paymentDay}"
+                data-date-value
+              />
+              <div class="row g-3">
+                <div class="col-md-7">
+                  <label class="form-label required">วันที่ชำระ</label>
+                  <input
+                    class="form-control"
+                    type="text"
+                    data-thai-date
+                    data-date-placeholder="เลือกวันที่ชำระ"
+                    required
+                  />
+                </div>
+                <div class="col-md-5">
+                  <label class="form-label required">เวลาชำระ</label>
+                  <input
+                    class="form-control"
+                    type="time"
+                    th:field="*{paymentTime}"
+                    data-thai-time
+                    step="300"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+            <label class="form-label">เลขอ้างอิง</label
+            ><input class="form-control" th:field="*{referenceNo}" />
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary">บันทึกการชำระ</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="modal fade" id="refundModal">
+      <div class="modal-dialog">
+        <form
+          class="modal-content js-confirm"
+          th:action="@{/jobs/{id}/refunds(id=${job.id})}"
+          th:object="${refundForm}"
+          method="post"
+        >
+          <div class="modal-header">
+            <h5 class="modal-title">คืนเงิน</h5>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">จำนวนเงินคืน</label
+              ><input
+                class="form-control"
+                type="number"
+                step="0.01"
+                th:field="*{amount}"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">วิธีคืนเงิน</label
+              ><select class="form-select" th:field="*{refundMethod}">
+                <option value="CASH">เงินสด</option>
+                <option value="TRANSFER">โอนเงิน</option>
+                <option value="PROMPTPAY">พร้อมเพย์</option>
+                <option value="CREDIT_CARD">บัตรเครดิต</option>
+                <option value="OTHER">อื่น ๆ</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">เลขอ้างอิง</label
+              ><input class="form-control" th:field="*{referenceNo}" />
+            </div>
+            <label class="form-label">เหตุผล</label
+            ><textarea
+              class="form-control"
+              th:field="*{reason}"
+              required
+            ></textarea>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-warning">ยืนยันคืนเงิน</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="modal fade" id="cancelModal">
+      <div class="modal-dialog modal-lg">
+        <form
+          class="modal-content js-confirm"
+          th:action="@{/jobs/{id}/cancel(id=${job.id})}"
+          th:object="${cancellationForm}"
+          method="post"
+          data-confirm-title="ยืนยันยกเลิกใบงาน?"
+        >
+          <div class="modal-header">
+            <h5 class="modal-title">ยกเลิกใบงาน</h5>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-warning">
+              ระบบจะยกเลิกงาน คืนเงิน และคืนอะไหล่ที่เลือกให้จบในกระบวนการเดียว
+            </div>
+            <label class="form-label required">เหตุผลที่ยกเลิก</label>
+            <textarea class="form-control mb-3" th:field="*{reason}" required></textarea>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">การคืนเงิน</label>
+                <select class="form-select" th:field="*{refundOption}">
+                  <option value="NONE">ไม่คืนเงิน</option>
+                  <option value="PARTIAL">คืนบางส่วน</option>
+                  <option value="FULL">คืนเต็มจำนวนที่รับจริง</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">จำนวนเงินคืนบางส่วน</label>
+                <input class="form-control" type="number" step="0.01" th:field="*{refundAmount}" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">วิธีคืนเงิน</label>
+                <select class="form-select" th:field="*{refundMethod}">
+                  <option value="CASH">เงินสด</option><option value="TRANSFER">โอนเงิน</option>
+                  <option value="PROMPTPAY">พร้อมเพย์</option><option value="CREDIT_CARD">บัตรเครดิต</option><option value="OTHER">อื่น ๆ</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">เลขอ้างอิงการคืนเงิน</label>
+                <input class="form-control" th:field="*{refundReference}" />
+              </div>
+            </div>
+            <div class="mt-4" th:if="${!#lists.isEmpty(job.items.?[active and itemType.name() == 'PRODUCT'])}">
+              <label class="form-label">อะไหล่ที่คืนเข้าสต๊อก</label>
+              <div class="form-check" th:each="item:${job.items}" th:if="${item.active and item.itemType.name()=='PRODUCT'}">
+                <input class="form-check-input" type="checkbox" th:field="*{returnItemIds}" th:value="${item.id}" />
+                <label class="form-check-label" th:text="${item.description+' · '+item.quantity+' '+item.unit}"></label>
+              </div>
+              <small class="text-muted">รายการที่ไม่เลือกจะถือว่าใช้ไปแล้วและไม่คืนสต๊อก</small>
+            </div>
+          </div>
+          <div class="modal-footer"><button class="btn btn-danger">ยืนยันยกเลิกงาน</button></div>
+        </form>
+      </div>
+    </div>
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+  </body>
+</html>

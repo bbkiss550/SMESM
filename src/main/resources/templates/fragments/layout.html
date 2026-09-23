@@ -1,0 +1,204 @@
+<!doctype html>
+<html
+  lang="th"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head th:fragment="head(title)">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title th:text="${title} + ' · SME Service Manager'">
+      SME Service Manager
+    </title>
+    <link rel="stylesheet" th:href="@{/assets/vendor/bootstrap.min.css}" />
+    <link rel="stylesheet" th:href="@{/assets/vendor/bootstrap-icons.css}" />
+    <link rel="stylesheet" th:href="@{/assets/vendor/sweetalert2.min.css}" />
+    <link rel="stylesheet" th:href="@{/assets/vendor/flatpickr.min.css}" />
+    <link
+      rel="stylesheet"
+      th:href="@{/assets/css/app.css(v='20260923-6')}"
+    />
+  </head>
+  <body>
+    <aside class="app-sidebar" th:fragment="sidebar(active)">
+      <a class="brand" th:href="@{/dashboard}"
+        ><span class="brand-mark"><i class="bi bi-briefcase-fill"></i></span
+        ><span>SME Service<br />Manager</span></a
+      >
+      <ul class="sidebar-nav">
+        <li>
+          <a
+            th:href="@{/dashboard}"
+            th:classappend="${active=='dashboard'}?'active'"
+            ><i class="bi bi-house-door-fill"></i><span>แดชบอร์ด</span></a
+          >
+        </li>
+        <li>
+          <a th:href="@{/jobs}" th:classappend="${active=='jobs'}?'active'"
+            ><i class="bi bi-wrench-adjustable"></i><span>งานบริการ</span></a
+          >
+        </li>
+        <li>
+          <a
+            th:href="@{/calendar}"
+            th:classappend="${active=='calendar'}?'active'"
+            ><i class="bi bi-calendar3"></i><span>ปฏิทินงาน</span></a
+          >
+        </li>
+        <li>
+          <a
+            th:href="@{/customers}"
+            th:classappend="${active=='customers'}?'active'"
+            ><i class="bi bi-people-fill"></i><span>ลูกค้า</span></a
+          >
+        </li>
+        <li>
+          <a
+            th:href="@{/services}"
+            th:classappend="${active=='services'}?'active'"
+            ><i class="bi bi-grid-fill"></i><span>บริการ</span></a
+          >
+        </li>
+        <li>
+          <a
+            th:href="@{/products}"
+            th:classappend="${active=='products'}?'active'"
+            ><i class="bi bi-box-seam-fill"></i><span>สินค้า / อะไหล่</span></a
+          >
+        </li>
+        <li>
+          <a th:href="@{/stock}" th:classappend="${active=='stock'}?'active'"
+            ><i class="bi bi-house-gear-fill"></i><span>สต๊อก</span></a
+          >
+        </li>
+        <li>
+          <a
+            th:href="@{/payments}"
+            th:classappend="${active=='payments'}?'active'"
+            ><i class="bi bi-credit-card-fill"></i><span>การชำระเงิน</span></a
+          >
+        </li>
+        <li sec:authorize="hasRole('ADMIN')">
+          <a
+            th:href="@{/reports}"
+            th:classappend="${active=='reports'}?'active'"
+            ><i class="bi bi-bar-chart-fill"></i><span>รายงาน</span></a
+          >
+        </li>
+        <li sec:authorize="hasRole('ADMIN')">
+          <a th:href="@{/users}" th:classappend="${active=='users'}?'active'"
+            ><i class="bi bi-person-badge-fill"></i><span>ผู้ใช้งาน</span></a
+          >
+        </li>
+        <li sec:authorize="hasRole('ADMIN')">
+          <a
+            th:href="@{/settings}"
+            th:classappend="${active=='settings'}?'active'"
+            ><i class="bi bi-gear-fill"></i><span>ตั้งค่า</span></a
+          >
+        </li>
+      </ul>
+      <div class="sidebar-footer">
+        ดูแลธุรกิจบริการ<br />ให้เติบโต ไปด้วยกัน<br /><small>v1.0.0</small>
+      </div>
+    </aside>
+    <div class="sidebar-overlay" th:fragment="overlay"></div>
+    <header class="app-topbar" th:fragment="topbar">
+      <button
+        class="icon-btn mobile-nav-toggle"
+        type="button"
+        data-sidebar-toggle
+      >
+        <i class="bi bi-list fs-4"></i>
+      </button>
+      <div class="global-search">
+        <i class="bi bi-search"></i
+        ><input
+          id="global-search"
+          class="form-control"
+          autocomplete="off"
+          placeholder="ค้นหาลูกค้า / เลขที่ใบงาน / เบอร์โทร"
+        />
+        <div id="global-search-results" class="search-results"></div>
+      </div>
+      <div class="topbar-actions">
+        <div class="dropdown">
+          <button class="icon-btn position-relative" data-bs-toggle="dropdown">
+            <i class="bi bi-bell fs-5"></i
+            ><span
+              class="position-absolute top-0 end-0 badge rounded-pill bg-danger"
+              th:if="${navNotifications.unread > 0}"
+              th:text="${navNotifications.unread}"
+              >3</span
+            >
+          </button>
+          <div class="dropdown-menu dropdown-menu-end p-0" style="width: 330px">
+            <div class="p-3 border-bottom fw-bold">การแจ้งเตือนล่าสุด</div>
+            <a
+              class="dropdown-item py-3 border-bottom"
+              th:each="n:${navNotifications.items}"
+              th:href="${n.targetUrl ?: '#'}"
+              ><div class="fw-semibold" th:text="${n.title}"></div>
+              <small class="text-muted" th:text="${n.message}"></small
+            ></a>
+            <div
+              class="p-3 text-center text-muted"
+              th:if="${#lists.isEmpty(navNotifications.items)}"
+            >
+              ยังไม่มีการแจ้งเตือน
+            </div>
+          </div>
+        </div>
+        <button
+          class="icon-btn"
+          type="button"
+          data-theme-toggle
+          title="สลับธีม"
+        >
+          <i class="bi bi-moon-stars-fill"></i>
+        </button>
+        <div class="dropdown user-chip">
+          <span
+            class="avatar"
+            th:text="${currentUser != null ? #strings.substring(currentUser.firstName,0,1) : 'U'}"
+            >ส</span
+          ><button
+            class="btn btn-link text-start p-0 text-decoration-none dropdown-toggle"
+            data-bs-toggle="dropdown"
+          >
+            <span class="user-meta"
+              ><strong
+                class="d-block text-body"
+                th:text="${currentUser?.fullName}"
+                >สมชาย ใจดี</strong
+              ><small class="text-muted" th:text="${currentUser?.role?.name}"
+                >ผู้ดูแลระบบ</small
+              ></span
+            >
+          </button>
+          <div class="dropdown-menu dropdown-menu-end">
+            <form th:action="@{/logout}" method="post">
+              <button class="dropdown-item text-danger" type="submit">
+                <i class="bi bi-box-arrow-right me-2"></i>ออกจากระบบ
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </header>
+    <div th:fragment="flash" class="d-none">
+      <span id="flash-success" th:text="${successMessage}"></span
+      ><span id="flash-error" th:text="${errorMessage}"></span
+      ><span id="temporary-password" th:text="${temporaryPassword}"></span>
+    </div>
+    <div th:fragment="scripts">
+      <script th:src="@{/assets/vendor/bootstrap.bundle.min.js}"></script>
+      <script th:src="@{/assets/vendor/sweetalert2.all.min.js}"></script>
+      <script th:src="@{/assets/vendor/chart.umd.min.js}"></script>
+      <script th:src="@{/assets/vendor/flatpickr.min.js}"></script>
+      <script th:src="@{/assets/vendor/flatpickr-th.js}"></script>
+      <script th:src="@{/assets/js/app.js(v='20260923-20')}"></script>
+    </div>
+  </body>
+</html>
