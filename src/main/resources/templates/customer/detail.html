@@ -53,7 +53,7 @@
             </div>
             <div class="text-end">
               <div class="text-muted">งานทั้งหมด</div>
-              <strong class="fs-2" th:text="${#lists.size(jobs)}"></strong>
+              <strong class="fs-2" th:text="${jobs.totalElements}"></strong>
             </div>
           </div>
         </section>
@@ -98,7 +98,7 @@
             </section>
           </div>
           <div class="col-lg-7">
-            <section class="card h-100">
+            <section class="card h-100" data-ajax-table="customer-jobs">
               <div class="card-header">
                 <h2 class="section-title">ประวัติการใช้บริการ</h2>
               </div>
@@ -112,10 +112,11 @@
                       <th>หัวข้องาน</th>
                       <th>ยอดรวม</th>
                       <th>สถานะ</th>
+                      <th>จัดการ</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr th:each="job:${jobs}">
+                    <tr th:each="job:${jobs.content}">
                       <td>
                         <a
                           th:href="@{/jobs/{id}(id=${job.id})}"
@@ -137,10 +138,12 @@
                           th:text="${statusLabels[job.jobStatus.name()]}"
                         ></span>
                       </td>
+                      <td><a class="btn btn-sm btn-outline-primary text-nowrap" th:href="@{/jobs/{id}(id=${job.id})}"><i class="bi bi-eye me-1"></i>ดูข้อมูล</a></td>
                     </tr>
                   </tbody>
                 </table>
               </div>
+              <div th:replace="~{fragments/layout :: pagination(page=${jobs}, baseUrl=${'/customers/' + customer.id}, q='', status=null)}"></div>
             </section>
           </div>
         </div>

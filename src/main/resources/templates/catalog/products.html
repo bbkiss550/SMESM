@@ -23,7 +23,7 @@
             <i class="bi bi-plus-lg me-2"></i>เพิ่มสินค้า
           </button>
         </div>
-        <form class="card filter-bar">
+        <form class="card filter-bar" data-ajax-search="products">
           <div class="input-group">
             <span class="input-group-text bg-transparent"
               ><i class="bi bi-search"></i></span
@@ -35,7 +35,7 @@
             /><button class="btn btn-outline-primary">ค้นหา</button>
           </div>
         </form>
-        <section class="card">
+        <section class="card" data-ajax-table="products">
           <div class="table-responsive">
             <table class="table table-hover">
               <thead>
@@ -48,7 +48,7 @@
                   <th class="text-end">ราคาขาย</th>
                   <th class="text-end">คงเหลือ</th>
                   <th>ระดับสต๊อก</th>
-                  <th></th>
+                  <th>จัดการ</th>
                 </tr>
               </thead>
               <tbody>
@@ -77,25 +77,25 @@
                     ></span>
                   </td>
                   <td>
-                    <form
-                      class="js-confirm"
-                      th:action="@{/products/{id}/toggle(id=${p.id})}"
-                      method="post"
-                    >
-                      <button
-                        class="btn btn-sm btn-outline-secondary"
-                        th:text="${p.active?'ปิด':'เปิด'}"
-                      ></button>
-                    </form>
+                    <div class="d-flex flex-wrap gap-1">
+                      <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#productModal" data-edit-kind="product"
+                        th:attr="data-id=${p.id},data-product-name=${p.productName},data-category=${p.category},data-unit=${p.unit},data-cost-price=${p.costPrice},data-sale-price=${p.salePrice},data-min-stock=${p.minStock}">
+                        <i class="bi bi-pencil me-1"></i>แก้ไข
+                      </button>
+                      <form class="js-confirm" th:action="@{/products/{id}/toggle(id=${p.id})}" method="post" th:attr="data-confirm-title=${p.active?'ลบสินค้านี้?':'เปิดใช้งานสินค้านี้?'},data-confirm-text=${p.active?'ระบบจะปิดใช้งานและเก็บประวัติสินค้า/สต๊อกไว้':'สินค้าจะกลับมาใช้งานได้'}">
+                        <button class="btn btn-sm btn-outline-danger" th:text="${p.active?'ลบ':'เปิดใช้งาน'}"></button>
+                      </form>
+                    </div>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
+          <div th:replace="~{fragments/layout :: pagination(page=${products}, baseUrl='/products', q=${q}, status=null)}"></div>
         </section>
       </main>
     </div>
-    <div class="modal fade" id="productModal">
+    <div class="modal fade" id="productModal" data-reset-on-open data-create-action="/products" data-create-title="เพิ่มสินค้า / อะไหล่" data-create-submit="บันทึกสินค้า">
       <div class="modal-dialog modal-lg">
         <form
           class="modal-content"
@@ -104,7 +104,7 @@
           method="post"
         >
           <div class="modal-header">
-            <h5 class="modal-title">เพิ่มสินค้า / อะไหล่</h5>
+          <h5 class="modal-title" data-form-title>เพิ่มสินค้า / อะไหล่</h5>
             <button class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
@@ -143,7 +143,7 @@
                   th:field="*{salePrice}"
                 />
               </div>
-              <div class="col-md-3">
+              <div class="col-md-3" data-opening-stock-field>
                 <label class="form-label">สต๊อกเริ่มต้น</label
                 ><input
                   class="form-control"
@@ -164,7 +164,7 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button class="btn btn-primary">บันทึกสินค้า</button>
+            <button class="btn btn-primary" data-form-submit>บันทึกสินค้า</button>
           </div>
         </form>
       </div>

@@ -16,7 +16,7 @@ public class PaymentController {
     public PaymentController(PaymentRepository payments,RefundRepository refunds,SettingRepository settings){this.payments=payments;this.refunds=refunds;this.settings=settings;}
 
     @GetMapping("/payments") public String list(@RequestParam(defaultValue="") String q,@RequestParam(defaultValue="0") int page,Model model){
-        model.addAttribute("payments",payments.search(q,PageRequest.of(page,12)));model.addAttribute("q",q);return "payment/list";}
+        model.addAttribute("payments",payments.search(q,PageRequest.of(page,10)));model.addAttribute("q",q);return "payment/list";}
 
     @GetMapping("/payments/{id}/receipt") public String receipt(@PathVariable Long id,Model model){
         Payment payment=payments.findReceiptById(id).orElseThrow(() -> new ResourceNotFoundException("ไม่พบใบเสร็จ"));

@@ -15,7 +15,7 @@
             </p>
           </div>
         </div>
-        <form class="card filter-bar">
+        <form class="card filter-bar" data-ajax-search="payments">
           <div class="input-group">
             <span class="input-group-text bg-transparent"
               ><i class="bi bi-search"></i></span
@@ -27,7 +27,7 @@
             /><button class="btn btn-outline-primary">ค้นหา</button>
           </div>
         </form>
-        <section class="card">
+        <section class="card" data-ajax-table="payments">
           <div class="card-header d-flex justify-content-between">
             <h2 class="section-title">รายการชำระเงิน</h2>
             <span
@@ -47,7 +47,7 @@
                   <th>ประเภท</th>
                   <th>วิธีชำระ</th>
                   <th class="text-end">จำนวนเงิน</th>
-                  <th></th>
+                  <th>ดูข้อมูล</th>
                 </tr>
               </thead>
               <tbody>
@@ -74,17 +74,23 @@
                     th:text="'฿'+${#numbers.formatDecimal(p.amount,1,'COMMA',2,'POINT')}"
                   ></td>
                   <td>
+                    <div class="d-flex flex-wrap gap-1">
+                    <a class="btn btn-sm btn-outline-secondary text-nowrap"
+                      th:href="@{/jobs/{id}(id=${p.job.id})}"
+                      ><i class="bi bi-eye me-1"></i>ดูใบงาน</a>
                     <a
-                      class="btn btn-sm btn-outline-primary"
+                      class="btn btn-sm btn-outline-primary text-nowrap"
                       th:href="@{/payments/{id}/receipt(id=${p.id})}"
                       target="_blank"
-                      ><i class="bi bi-printer"></i
+                      ><i class="bi bi-printer me-1"></i>ดูใบเสร็จ
                     ></a>
+                    </div>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
+          <div th:replace="~{fragments/layout :: pagination(page=${payments}, baseUrl='/payments', q=${q}, status=null)}"></div>
         </section>
       </main>
     </div>

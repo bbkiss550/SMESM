@@ -61,4 +61,9 @@ public class Customer extends AuditableEntity {
     public String getPrimaryPhone() {
         return phones.stream().filter(CustomerPhone::isActive).map(CustomerPhone::getPhone).findFirst().orElse("-");
     }
+
+    public String getSecondaryPhone() {
+        return phones.stream().filter(CustomerPhone::isActive).filter(phone -> !phone.isPrimaryPhone())
+                .map(CustomerPhone::getPhone).findFirst().orElse("");
+    }
 }

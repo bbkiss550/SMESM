@@ -17,7 +17,7 @@
     <link rel="stylesheet" th:href="@{/assets/vendor/flatpickr.min.css}" />
     <link
       rel="stylesheet"
-      th:href="@{/assets/css/app.css(v='20260923-6')}"
+      th:href="@{/assets/css/app.css(v='20260924-2')}"
     />
   </head>
   <body>
@@ -192,13 +192,74 @@
       ><span id="flash-error" th:text="${errorMessage}"></span
       ><span id="temporary-password" th:text="${temporaryPassword}"></span>
     </div>
+    <div
+      th:fragment="pagination(page, baseUrl, q, status)"
+      th:if="${page.totalPages > 0}"
+      class="card-body border-top d-flex flex-wrap justify-content-between align-items-center gap-2"
+    >
+      <small
+        class="text-muted"
+        th:text="${page.totalElements == 0 ? 'ไม่มีรายการ' : 'แสดง ' + (page.number * page.size + 1) + '–' + (page.number * page.size + page.numberOfElements) + ' จาก ' + page.totalElements + ' รายการ'}"
+      ></small>
+      <nav th:if="${page.totalPages > 1}" data-ajax-pagination aria-label="เปลี่ยนหน้ารายการ">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+            <a
+              th:if="${!page.first}"
+              class="page-link"
+              th:href="@{${baseUrl}(page=0,q=${q},status=${status})}"
+              aria-label="หน้าแรก"
+              >«</a
+            ><span th:if="${page.first}" class="page-link">«</span>
+          </li>
+          <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+            <a
+              th:if="${!page.first}"
+              class="page-link"
+              th:href="@{${baseUrl}(page=${page.number - 1},q=${q},status=${status})}"
+              aria-label="หน้าก่อนหน้า"
+              >‹</a
+            ><span th:if="${page.first}" class="page-link">‹</span>
+          </li>
+          <li
+            class="page-item"
+            th:each="pageNumber : ${#numbers.sequence(T(java.lang.Math).max(0, page.number - 2), T(java.lang.Math).min(page.totalPages - 1, page.number + 2))}"
+            th:classappend="${pageNumber == page.number} ? 'active'"
+          >
+            <a
+              class="page-link"
+              th:href="@{${baseUrl}(page=${pageNumber},q=${q},status=${status})}"
+              th:text="${pageNumber + 1}"
+            ></a>
+          </li>
+          <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+            <a
+              th:if="${!page.last}"
+              class="page-link"
+              th:href="@{${baseUrl}(page=${page.number + 1},q=${q},status=${status})}"
+              aria-label="หน้าถัดไป"
+              >›</a
+            ><span th:if="${page.last}" class="page-link">›</span>
+          </li>
+          <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+            <a
+              th:if="${!page.last}"
+              class="page-link"
+              th:href="@{${baseUrl}(page=${page.totalPages - 1},q=${q},status=${status})}"
+              aria-label="หน้าสุดท้าย"
+              >»</a
+            ><span th:if="${page.last}" class="page-link">»</span>
+          </li>
+        </ul>
+      </nav>
+    </div>
     <div th:fragment="scripts">
       <script th:src="@{/assets/vendor/bootstrap.bundle.min.js}"></script>
       <script th:src="@{/assets/vendor/sweetalert2.all.min.js}"></script>
       <script th:src="@{/assets/vendor/chart.umd.min.js}"></script>
       <script th:src="@{/assets/vendor/flatpickr.min.js}"></script>
       <script th:src="@{/assets/vendor/flatpickr-th.js}"></script>
-      <script th:src="@{/assets/js/app.js(v='20260923-20')}"></script>
+        <script th:src="@{/assets/js/app.js(v='20260924-9')}"></script>
     </div>
   </body>
 </html>

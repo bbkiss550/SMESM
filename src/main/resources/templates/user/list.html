@@ -42,7 +42,7 @@
             </div>
           </article>
         </section>
-        <form class="card filter-bar">
+        <form class="card filter-bar" data-ajax-search="users">
           <div class="input-group">
             <span class="input-group-text bg-transparent"
               ><i class="bi bi-search"></i></span
@@ -54,7 +54,7 @@
             /><button class="btn btn-outline-primary">ค้นหา</button>
           </div>
         </form>
-        <section class="card">
+        <section class="card" data-ajax-table="users">
           <div class="table-responsive">
             <table class="table table-hover">
               <thead>
@@ -89,14 +89,20 @@
                   </td>
                   <td>
                     <div class="d-flex gap-1">
+                      <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#userModal" data-edit-kind="user"
+                        th:attr="data-id=${u.id},data-first-name=${u.firstName},data-last-name=${u.lastName},data-phone=${u.phone},data-email=${u.email},data-role-id=${u.role.id}">
+                        <i class="bi bi-pencil me-1"></i>แก้ไข
+                      </button>
                       <form
                         class="js-confirm"
                         th:action="@{/users/{id}/toggle(id=${u.id})}"
+                        th:attr="data-confirm-title=${u.active?'ลบผู้ใช้งานนี้?':'เปิดใช้งานผู้ใช้งานนี้?'},data-confirm-text=${u.active?'ระบบจะปิดใช้งานและเก็บประวัติผู้ใช้งานไว้':'ผู้ใช้งานจะกลับมาใช้งานได้'}"
                         method="post"
                       >
                         <button
                           class="btn btn-sm btn-outline-secondary"
-                          th:text="${u.active?'ปิด':'เปิด'}"
+                          th:text="${u.active?'ลบ':'เปิดใช้งาน'}"
+                          th:classappend="${u.active?'btn-outline-danger':'btn-outline-secondary'}"
                         ></button>
                       </form>
                       <form
@@ -114,10 +120,11 @@
               </tbody>
             </table>
           </div>
+          <div th:replace="~{fragments/layout :: pagination(page=${users}, baseUrl='/users', q=${q}, status=null)}"></div>
         </section>
       </main>
     </div>
-    <div class="modal fade" id="userModal">
+    <div class="modal fade" id="userModal" data-reset-on-open data-create-action="/users" data-create-title="สร้างผู้ใช้งาน" data-create-submit="สร้างผู้ใช้งาน">
       <div class="modal-dialog modal-lg">
         <form
           class="modal-content"
@@ -126,16 +133,16 @@
           method="post"
         >
           <div class="modal-header">
-            <h5 class="modal-title">สร้างผู้ใช้งาน</h5>
+            <h5 class="modal-title" data-form-title>สร้างผู้ใช้งาน</h5>
             <button class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
             <div class="row g-3">
-              <div class="col-md-6">
+              <div class="col-md-6" data-username-field>
                 <label class="form-label required">ชื่อผู้ใช้</label
                 ><input class="form-control" th:field="*{username}" required />
               </div>
-              <div class="col-md-6">
+              <div class="col-md-6" data-password-field>
                 <label class="form-label required">รหัสผ่านเริ่มต้น</label
                 ><input
                   class="form-control"
@@ -165,7 +172,7 @@
               </div>
               <div class="col-md-4">
                 <label class="form-label">เบอร์โทร</label
-                ><input class="form-control" th:field="*{phone}" />
+                ><input class="form-control" th:field="*{phone}" maxlength="10" inputmode="numeric" data-phone-counter />
               </div>
               <div class="col-md-4">
                 <label class="form-label">อีเมล</label
@@ -174,7 +181,7 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button class="btn btn-primary">สร้างผู้ใช้งาน</button>
+            <button class="btn btn-primary" data-form-submit>สร้างผู้ใช้งาน</button>
           </div>
         </form>
       </div>

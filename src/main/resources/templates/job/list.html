@@ -40,7 +40,7 @@
             </div>
           </article>
         </section>
-        <form class="card filter-bar" method="get">
+        <form class="card filter-bar" method="get" data-ajax-search="jobs">
           <div class="row g-2 align-items-center">
             <div class="col-lg-7">
               <div class="input-group">
@@ -70,7 +70,7 @@
             </div>
           </div>
         </form>
-        <section class="card">
+        <section class="card" data-ajax-table="jobs">
           <div class="table-responsive">
             <table class="table table-hover">
               <thead>
@@ -83,7 +83,7 @@
                   <th>วันนัดหมาย</th>
                   <th>สถานะ</th>
                   <th class="text-end">ยอดรวม</th>
-                  <th></th>
+                  <th>จัดการ</th>
                 </tr>
               </thead>
               <tbody>
@@ -122,9 +122,10 @@
                     th:text="'฿'+${#numbers.formatDecimal(job.grandTotal,1,'COMMA',2,'POINT')}"
                   ></td>
                   <td>
-                    <a class="icon-btn" th:href="@{/jobs/{id}(id=${job.id})}"
-                      ><i class="bi bi-three-dots-vertical"></i
-                    ></a>
+                    <div class="d-flex flex-wrap gap-1">
+                      <a class="btn btn-sm btn-outline-primary text-nowrap" th:href="@{/jobs/{id}(id=${job.id})}"><i class="bi bi-eye me-1"></i>ดูข้อมูล</a>
+                      <a class="btn btn-sm btn-outline-danger text-nowrap" th:if="${job.jobStatus.name()!='COMPLETED' and job.jobStatus.name()!='CANCELLED'}" th:href="@{/jobs/{id}(id=${job.id})} + '#cancelModal'"><i class="bi bi-x-circle me-1"></i>ยกเลิกงาน</a>
+                    </div>
                   </td>
                 </tr>
                 <tr th:if="${jobs.empty}">
@@ -137,41 +138,14 @@
               </tbody>
             </table>
           </div>
-          <div
-            class="card-body d-flex justify-content-between align-items-center"
-          >
-            <small
-              class="text-muted"
-              th:text="'ทั้งหมด '+${jobs.totalElements}+' รายการ'"
-            ></small>
-            <nav th:if="${jobs.totalPages>1}">
-              <ul class="pagination pagination-sm mb-0">
-                <li class="page-item" th:classappend="${jobs.first}?'disabled'">
-                  <a
-                    class="page-link"
-                    th:href="@{/jobs(page=${jobs.number-1},q=${q},status=${selectedStatus})}"
-                    >‹</a
-                  >
-                </li>
-                <li class="page-item active">
-                  <span class="page-link" th:text="${jobs.number+1}"></span>
-                </li>
-                <li class="page-item" th:classappend="${jobs.last}?'disabled'">
-                  <a
-                    class="page-link"
-                    th:href="@{/jobs(page=${jobs.number+1},q=${q},status=${selectedStatus})}"
-                    >›</a
-                  >
-                </li>
-              </ul>
-            </nav>
-          </div>
+          <div th:replace="~{fragments/layout :: pagination(page=${jobs}, baseUrl='/jobs', q=${q}, status=${selectedStatus})}"></div>
         </section>
       </main>
     </div>
     <div
       class="modal fade"
       id="createJobModal"
+      data-reset-on-open
       tabindex="-1"
       aria-labelledby="createJobModalTitle"
       aria-hidden="true"

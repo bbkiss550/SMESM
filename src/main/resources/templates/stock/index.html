@@ -54,7 +54,7 @@
             </div>
           </article>
         </section>
-        <section class="card">
+        <section class="card" data-ajax-table="stock-transactions">
           <div class="table-responsive">
             <table class="table table-hover">
               <thead>
@@ -68,6 +68,7 @@
                   <th class="text-end">ก่อน</th>
                   <th class="text-end">หลัง</th>
                   <th>ผู้ทำรายการ</th>
+                  <th>ดูข้อมูล</th>
                 </tr>
               </thead>
               <tbody>
@@ -89,14 +90,34 @@
                   <td class="text-end" th:text="${tx.quantityBefore}"></td>
                   <td class="text-end" th:text="${tx.quantityAfter}"></td>
                   <td th:text="${tx.createBy}"></td>
+                  <td><button type="button" class="btn btn-sm btn-outline-primary text-nowrap" data-bs-toggle="modal" data-bs-target="#stockTransactionModal"
+                    th:attr="data-date=${#temporals.format(tx.createDate,'dd/MM/yyyy HH:mm')},data-type=${enumLabels[tx.transactionType.name()]},data-product-code=${tx.product.productCode},data-product-name=${tx.product.productName},data-reference=${tx.reference},data-quantity=${tx.quantity},data-before=${tx.quantityBefore},data-after=${tx.quantityAfter},data-user=${tx.createBy},data-note=${tx.note}">
+                    <i class="bi bi-eye me-1"></i>ดูข้อมูล</button></td>
                 </tr>
               </tbody>
             </table>
           </div>
+          <div th:replace="~{fragments/layout :: pagination(page=${transactions}, baseUrl='/stock', q='', status=null)}"></div>
         </section>
       </main>
     </div>
-    <div class="modal fade" id="stockModal">
+    <div class="modal fade" id="stockTransactionModal" tabindex="-1" aria-labelledby="stockTransactionTitle">
+      <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h2 class="modal-title fs-5" id="stockTransactionTitle">รายละเอียดรายการสต๊อก</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="ปิด"></button></div>
+        <div class="modal-body"><dl class="row mb-0">
+          <dt class="col-5">วันและเวลา</dt><dd class="col-7" data-stock-field="date"></dd>
+          <dt class="col-5">ประเภทรายการ</dt><dd class="col-7" data-stock-field="type"></dd>
+          <dt class="col-5">สินค้า</dt><dd class="col-7"><span data-stock-field="productCode"></span> · <span data-stock-field="productName"></span></dd>
+          <dt class="col-5">เลขอ้างอิง</dt><dd class="col-7" data-stock-field="reference"></dd>
+          <dt class="col-5">จำนวน</dt><dd class="col-7" data-stock-field="quantity"></dd>
+          <dt class="col-5">ยอดก่อนปรับ</dt><dd class="col-7" data-stock-field="before"></dd>
+          <dt class="col-5">ยอดหลังปรับ</dt><dd class="col-7" data-stock-field="after"></dd>
+          <dt class="col-5">ผู้ทำรายการ</dt><dd class="col-7" data-stock-field="user"></dd>
+          <dt class="col-5">หมายเหตุ</dt><dd class="col-7" data-stock-field="note"></dd>
+        </dl></div>
+      </div></div>
+    </div>
+    <div class="modal fade" id="stockModal" data-reset-on-open>
       <div class="modal-dialog">
         <form class="modal-content" th:action="@{/stock/adjust}" method="post">
           <div class="modal-header">

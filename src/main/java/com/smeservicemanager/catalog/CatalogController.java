@@ -18,9 +18,11 @@ public class CatalogController {
         model.addAttribute("q",q);model.addAttribute("serviceForm",new ServiceForm());return "catalog/services";}
     @PostMapping("/services") public String createService(@Valid ServiceForm form,BindingResult result,RedirectAttributes r){if(result.hasErrors()){r.addFlashAttribute("errorMessage","กรุณาตรวจสอบข้อมูลบริการ");}else{catalog.createService(form);r.addFlashAttribute("successMessage","เพิ่มบริการแล้ว");}return "redirect:/services";}
     @PostMapping("/services/{id}/toggle") public String toggleService(@PathVariable Long id,RedirectAttributes r){catalog.toggleService(id);r.addFlashAttribute("successMessage","อัปเดตสถานะแล้ว");return "redirect:/services";}
+    @PostMapping("/services/{id}") public String updateService(@PathVariable Long id,@Valid ServiceForm form,BindingResult result,RedirectAttributes r){if(result.hasErrors()){r.addFlashAttribute("errorMessage","กรุณาตรวจสอบข้อมูลบริการ");}else{catalog.updateService(id,form);r.addFlashAttribute("successMessage","แก้ไขข้อมูลบริการแล้ว");}return "redirect:/services";}
 
     @GetMapping("/products") public String products(@RequestParam(defaultValue="") String q,@RequestParam(defaultValue="0") int page,Model model){
         model.addAttribute("products",products.search(q,PageRequest.of(page,10)));model.addAttribute("q",q);model.addAttribute("productForm",new ProductForm());return "catalog/products";}
     @PostMapping("/products") public String createProduct(@Valid ProductForm form,BindingResult result,RedirectAttributes r){if(result.hasErrors()){r.addFlashAttribute("errorMessage","กรุณาตรวจสอบข้อมูลสินค้า");}else{catalog.createProduct(form);r.addFlashAttribute("successMessage","เพิ่มสินค้าแล้ว");}return "redirect:/products";}
     @PostMapping("/products/{id}/toggle") public String toggleProduct(@PathVariable Long id,RedirectAttributes r){catalog.toggleProduct(id);r.addFlashAttribute("successMessage","อัปเดตสถานะแล้ว");return "redirect:/products";}
+    @PostMapping("/products/{id}") public String updateProduct(@PathVariable Long id,@Valid ProductForm form,BindingResult result,RedirectAttributes r){if(result.hasErrors()){r.addFlashAttribute("errorMessage","กรุณาตรวจสอบข้อมูลสินค้า");}else{catalog.updateProduct(id,form);r.addFlashAttribute("successMessage","แก้ไขข้อมูลสินค้าแล้ว");}return "redirect:/products";}
 }

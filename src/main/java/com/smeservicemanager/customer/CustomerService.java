@@ -7,6 +7,8 @@ import com.smeservicemanager.shared.service.DocumentNumberService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class CustomerService {
     private final CustomerRepository customers;
@@ -38,5 +40,44 @@ public class CustomerService {
     public void toggle(Long id) {
         Customer customer = customers.findById(id).orElseThrow(() -> new ResourceNotFoundException("ไม่พบลูกค้า"));
         if (customer.isActive()) customer.deactivate(); else customer.activate();
+    }
+
+    @Transactional
+    public Customer update(Long id, CustomerForm form) {
+        Customer customer = customers.findOneWithPhonesById(id).orElseThrow(() -> new ResourceNotFoundException("ไม่พบลูกค้า"));
+        if (form.getCustomerType() == CustomerType.BUSINESS && (form.getCompanyName() == null || form.getCompanyName().isBlank())) {
+            throw new BusinessException("ลูกค้าธุรกิจต้องระบุชื่อบริษัท");
+        }
+        customer.setCustomerType(form.getCustomerType());
+        customer.setName(form.getName().trim());
+        customer.setCompanyName(form.getCompanyName());
+        customer.setTaxId(form.getTaxId());
+        customer.setEmail(form.getEmail());
+        customer.setLineId(form.getLineId());
+        customer.setAddress(form.getAddress());
+        customer.setNote(form.getNote());
+
+        List<CustomerPhone> activePhones = customer.getPhones().stream().filter(CustomerPhone::isActive).toList();
+        CustomerPhone primary = activePhones.stream().filter(CustomerPhone::isPrimaryPhone).findFirst().orElseGet(() -> {
+            CustomerPhone phone = new CustomerPhone();
+            phone.setLabel("มือถือ");
+            phone.setPrimaryPhone(true);
+            customer.addPhone(phone);
+            return phone;
+        });
+        primary.setPhone(form.getPrimaryPhone());
+
+        CustomerPhone secondary = activePhones.stream().filter(phone -> !phone.isPrimaryPhone()).findFirst().orElse(null);
+        if (form.getSecondaryPhone() == null || form.getSecondaryPhone().isBlank()) {
+            activePhones.stream().filter(phone -> !phone.isPrimaryPhone()).forEach(CustomerPhone::deactivate);
+        } else if (secondary == null) {
+            secondary = new CustomerPhone();
+            secondary.setLabel("สำรอง");
+            customer.addPhone(secondary);
+            secondary.setPhone(form.getSecondaryPhone());
+        } else {
+            secondary.setPhone(form.getSecondaryPhone());
+        }
+        return customer;
     }
 }

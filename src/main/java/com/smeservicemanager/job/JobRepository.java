@@ -34,7 +34,7 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     List<Job> findByAppointmentStartBetweenOrderByAppointmentStartAsc(LocalDateTime start, LocalDateTime end);
 
     @EntityGraph(attributePaths = {"service", "technician"})
-    List<Job> findTop20ByCustomerIdOrderByAppointmentStartDesc(Long customerId);
+    Page<Job> findByCustomerIdOrderByAppointmentStartDesc(Long customerId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"customer", "service", "technician"})
     List<Job> findByTechnicianUsernameAndJobStatusInOrderByAppointmentStartAsc(String username, List<JobStatus> statuses);

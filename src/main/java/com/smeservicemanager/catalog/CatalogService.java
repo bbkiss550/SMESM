@@ -45,4 +45,24 @@ public class CatalogService {
     public void toggleService(Long id) { ServiceCatalog s=services.findById(id).orElseThrow(() -> new ResourceNotFoundException("ไม่พบบริการ")); if(s.isActive())s.deactivate();else s.activate(); }
     @Transactional
     public void toggleProduct(Long id) { Product p=products.findById(id).orElseThrow(() -> new ResourceNotFoundException("ไม่พบสินค้า")); if(p.isActive())p.deactivate();else p.activate(); }
+
+    @Transactional
+    public void updateService(Long id, ServiceForm form) {
+        ServiceCatalog service = services.findById(id).orElseThrow(() -> new ResourceNotFoundException("ไม่พบบริการ"));
+        service.setServiceName(form.getServiceName().trim());
+        service.setDescription(form.getDescription());
+        service.setDefaultPrice(form.getDefaultPrice());
+        service.setDefaultDurationMinutes(form.getDefaultDurationMinutes());
+    }
+
+    @Transactional
+    public void updateProduct(Long id, ProductForm form) {
+        Product product = products.findById(id).orElseThrow(() -> new ResourceNotFoundException("ไม่พบสินค้า"));
+        product.setProductName(form.getProductName().trim());
+        product.setCategory(form.getCategory());
+        product.setUnit(form.getUnit());
+        product.setCostPrice(form.getCostPrice());
+        product.setSalePrice(form.getSalePrice());
+        product.setMinStock(form.getMinStock());
+    }
 }

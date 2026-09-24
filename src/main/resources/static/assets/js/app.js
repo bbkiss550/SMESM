@@ -24,11 +24,139 @@
   if (error) Swal.fire({ icon: 'error', title: 'ไม่สำเร็จ', text: error, confirmButtonColor: '#0878f9' });
   if (temporaryPassword) Swal.fire({ icon: 'info', title: 'รหัสผ่านชั่วคราว', html: `<code class="fs-4">${temporaryPassword}</code><p class="mt-3 mb-0">โปรดคัดลอกและส่งให้ผู้ใช้อย่างปลอดภัย</p>`, confirmButtonColor: '#0878f9' });
 
-  document.querySelectorAll('form.js-confirm').forEach(form => form.addEventListener('submit', event => {
+  const updatePhoneCounter = input => {
+    const limit = Number(input.maxLength) || 10;
+    input.value = input.value.slice(0, limit);
+    let counter = input.parentElement.querySelector(`[data-phone-counter-for="${input.id}"]`);
+    if (!counter) {
+      counter = document.createElement('small');
+      counter.className = 'form-text text-muted text-end d-block';
+      counter.dataset.phoneCounterFor = input.id;
+      input.insertAdjacentElement('afterend', counter);
+    }
+    counter.textContent = `${input.value.length}/${limit}`;
+  };
+  document.querySelectorAll('input[data-phone-counter]').forEach(input => {
+    updatePhoneCounter(input);
+    input.addEventListener('input', () => updatePhoneCounter(input));
+  });
+
+  document.addEventListener('show.bs.modal', event => {
+    const modal = event.target;
+    if (!modal.matches('[data-reset-on-open]')) return;
+
+    const form = modal.querySelector('form');
+    if (!form) return;
+    const trigger = event.relatedTarget;
+    if (trigger?.dataset.editKind) {
+      const kind = trigger.dataset.editKind;
+      const collection = { service: 'services', product: 'products', user: 'users', customer: 'customers' }[kind];
+      form.action = `/${collection}/${trigger.dataset.id}`;
+      const fields = {
+        service: { serviceName: 'serviceName', description: 'description', defaultPrice: 'defaultPrice', defaultDurationMinutes: 'defaultDurationMinutes' },
+        product: { productName: 'productName', category: 'category', unit: 'unit', costPrice: 'costPrice', salePrice: 'salePrice', minStock: 'minStock' },
+        user: { firstName: 'firstName', lastName: 'lastName', phone: 'phone', email: 'email', roleId: 'roleId' },
+        customer: { customerType: 'customerType', name: 'name', companyName: 'companyName', taxId: 'taxId', primaryPhone: 'primaryPhone', secondaryPhone: 'secondaryPhone', email: 'email', lineId: 'lineId', address: 'address', note: 'note' }
+      }[kind];
+      Object.entries(fields).forEach(([fieldName, dataName]) => {
+        const field = form.elements.namedItem(fieldName);
+        if (field) field.value = trigger.dataset[dataName] || '';
+      });
+      if (kind === 'user') {
+        const username = modal.querySelector('[data-username-field]');
+        const password = modal.querySelector('[data-password-field]');
+        if (username) username.hidden = true;
+        if (password) password.hidden = true;
+        form.elements.namedItem('username').value = '';
+        form.elements.namedItem('username').required = false;
+        form.elements.namedItem('password').value = '';
+        form.elements.namedItem('password').required = false;
+      }
+      if (kind === 'product') {
+        const openingStock = modal.querySelector('[data-opening-stock-field]');
+        if (openingStock) openingStock.hidden = true;
+      }
+      modal.querySelector('[data-form-title]').textContent = ({ service: 'แก้ไขบริการ', product: 'แก้ไขสินค้า / อะไหล่', user: 'แก้ไขข้อมูลผู้ใช้งาน', customer: 'แก้ไขข้อมูลลูกค้า' })[kind];
+      modal.querySelector('[data-form-submit]').textContent = 'บันทึกการแก้ไข';
+      return;
+    }
+
+    form.action = modal.dataset.createAction || form.action;
+    modal.querySelector('[data-form-title]')?.replaceChildren(modal.dataset.createTitle || 'เพิ่มรายการ');
+    const submitLabel = modal.dataset.createSubmit;
+    if (submitLabel) modal.querySelector('[data-form-submit]')?.replaceChildren(submitLabel);
+    const openingStock = modal.querySelector('[data-opening-stock-field]');
+    if (openingStock) openingStock.hidden = false;
+    const username = modal.querySelector('[data-username-field]');
+    const password = modal.querySelector('[data-password-field]');
+    if (username) username.hidden = false;
+    if (password) password.hidden = false;
+    const passwordInput = form.elements.namedItem('password');
+    if (passwordInput) passwordInput.required = true;
+    const usernameInput = form.elements.namedItem('username');
+    if (usernameInput) usernameInput.required = true;
+    form.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]), textarea').forEach(field => {
+      if (field.type === 'checkbox' || field.type === 'radio') field.checked = false;
+      else field.value = '';
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+      field.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    form.querySelectorAll('select').forEach(select => {
+      const emptyOption = [...select.options].find(option => option.value === '');
+      select.value = emptyOption ? '' : (select.options[0]?.value ?? '');
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  });
+  document.addEventListener('hidden.bs.modal', event => {
+    const modal = event.target;
+    if (!modal.matches('[data-reset-on-open]')) return;
+    const openingStock = modal.querySelector('[data-opening-stock-field]');
+    if (openingStock) openingStock.hidden = false;
+    const username = modal.querySelector('[data-username-field]');
+    const password = modal.querySelector('[data-password-field]');
+    if (username) username.hidden = false;
+    if (password) password.hidden = false;
+  });
+  document.getElementById('stockTransactionModal')?.addEventListener('show.bs.modal', event => {
+    const source = event.relatedTarget;
+    if (!source) return;
+    ['date', 'type', 'productCode', 'productName', 'reference', 'quantity', 'before', 'after', 'user', 'note'].forEach(field => {
+      const target = event.target.querySelector(`[data-stock-field="${field}"]`);
+      if (target) target.textContent = source.dataset[field] || '-';
+    });
+  });
+  let customerDetailsRequest = 0;
+  const customerViewModal = document.getElementById('customerViewModal');
+  customerViewModal?.addEventListener('show.bs.modal', async event => {
+    const source = event.relatedTarget;
+    if (!source?.matches('[data-customer-details-url]')) return;
+    const requestId = ++customerDetailsRequest;
+    const body = document.getElementById('customerViewModalBody');
+    body.innerHTML = '<div class="d-flex justify-content-center align-items-center gap-2 py-5 text-muted"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span>กำลังโหลดข้อมูลลูกค้า...</div>';
+    try {
+      const response = await fetch(source.dataset.customerDetailsUrl, { headers: { Accept: 'text/html', 'X-Requested-With': 'XMLHttpRequest' } });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const detailsDocument = new DOMParser().parseFromString(await response.text(), 'text/html');
+      if (requestId !== customerDetailsRequest) return;
+      body.replaceChildren(...Array.from(detailsDocument.body.childNodes, node => document.importNode(node, true)));
+      initializeSortableTables(body);
+    } catch (error) {
+      if (requestId !== customerDetailsRequest) return;
+      body.innerHTML = '<div class="alert alert-danger mb-0">โหลดรายละเอียดและประวัติบริการไม่สำเร็จ กรุณาลองอีกครั้ง</div>';
+    }
+  });
+  customerViewModal?.addEventListener('hidden.bs.modal', () => { customerDetailsRequest += 1; });
+  if (window.location.hash === '#cancelModal') {
+    const cancellationModal = document.getElementById('cancelModal');
+    if (cancellationModal) bootstrap.Modal.getOrCreateInstance(cancellationModal).show();
+  }
+
+  const initializeConfirmForms = root => root.querySelectorAll('form.js-confirm').forEach(form => form.addEventListener('submit', event => {
     event.preventDefault();
     Swal.fire({ title: form.dataset.confirmTitle || 'ยืนยันรายการ?', text: form.dataset.confirmText || 'กรุณาตรวจสอบข้อมูลก่อนดำเนินการ', icon: 'warning', showCancelButton: true, confirmButtonText: 'ยืนยัน', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#0878f9' })
       .then(result => { if (result.isConfirmed) form.submit(); });
   }));
+  initializeConfirmForms(document);
 
   const search = document.getElementById('global-search');
   const results = document.getElementById('global-search-results');
@@ -45,6 +173,33 @@
     }, 250);
   });
   document.addEventListener('click', event => { if (!event.target.closest('.global-search')) results?.classList.remove('show'); });
+
+  const calendarJobModal = document.getElementById('calendarJobModal');
+  let calendarJobDetailsRequest = 0;
+  calendarJobModal?.addEventListener('show.bs.modal', async event => {
+    const source = event.relatedTarget;
+    if (!source?.dataset.jobDetailsUrl) return;
+
+    const requestId = ++calendarJobDetailsRequest;
+    const body = document.getElementById('calendarJobModalBody');
+    document.getElementById('calendarJobDetailLink')?.setAttribute('href', source.dataset.jobUrl || '#');
+    body.replaceChildren(Object.assign(document.createElement('div'), {
+      className: 'd-flex justify-content-center align-items-center gap-2 py-5 text-muted',
+      innerHTML: '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span>กำลังโหลดรายละเอียดใบงาน...'
+    }));
+
+    try {
+      const response = await fetch(source.dataset.jobDetailsUrl, { headers: { Accept: 'text/html' } });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const detailsDocument = new DOMParser().parseFromString(await response.text(), 'text/html');
+      if (requestId !== calendarJobDetailsRequest) return;
+      body.replaceChildren(...Array.from(detailsDocument.body.childNodes, node => document.importNode(node, true)));
+    } catch (error) {
+      if (requestId !== calendarJobDetailsRequest) return;
+      body.innerHTML = '<div class="alert alert-danger mb-0">โหลดรายละเอียดใบงานไม่สำเร็จ กรุณาลองอีกครั้ง</div>';
+    }
+  });
+  calendarJobModal?.addEventListener('hidden.bs.modal', () => { calendarJobDetailsRequest += 1; });
 
   const thaiMonthNames = [
     'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
@@ -416,7 +571,7 @@
   };
   const tableCollator = new Intl.Collator('th', { numeric: true, sensitivity: 'base' });
 
-  document.querySelectorAll('table thead').forEach(head => {
+  const initializeSortableTables = root => root.querySelectorAll('table thead').forEach(head => {
     const table = head.closest('table');
     if (table.closest('#receipt') || table.classList.contains('receipt-table') || !table.tBodies.length) return;
 
@@ -478,6 +633,70 @@
         rows.forEach(row => body.appendChild(row));
       });
     });
+  });
+  initializeSortableTables(document);
+
+  document.addEventListener('click', async event => {
+    const link = event.target.closest('[data-ajax-pagination] a.page-link[href]');
+    const table = link?.closest('[data-ajax-table]');
+    if (!link || !table || link.closest('.page-item.disabled')) return;
+
+    event.preventDefault();
+    table.classList.add('ajax-table-loading');
+    table.setAttribute('aria-busy', 'true');
+    try {
+      const response = await fetch(link.href, {
+        headers: { Accept: 'text/html', 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const pageDocument = new DOMParser().parseFromString(await response.text(), 'text/html');
+      const nextTable = pageDocument.querySelector(`[data-ajax-table="${table.dataset.ajaxTable}"]`);
+      if (!nextTable) throw new Error('ไม่พบส่วนตารางในผลลัพธ์');
+
+      table.replaceWith(nextTable);
+      initializeSortableTables(nextTable);
+      initializeConfirmForms(nextTable);
+      nextTable.querySelector('.page-item.active .page-link')?.focus({ preventScroll: true });
+    } catch (error) {
+      table.classList.remove('ajax-table-loading');
+      table.removeAttribute('aria-busy');
+      Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'โหลดรายการไม่สำเร็จ', text: 'กรุณาลองใหม่อีกครั้ง', showConfirmButton: false, timer: 3000 });
+    }
+  });
+
+  document.addEventListener('submit', async event => {
+    const form = event.target.closest('form[data-ajax-search]');
+    if (!form) return;
+
+    event.preventDefault();
+    const tableId = form.dataset.ajaxSearch;
+    const table = document.querySelector(`[data-ajax-table="${tableId}"]`);
+    if (!table) return;
+
+    const url = new URL(form.action || window.location.href, window.location.origin);
+    url.search = new URLSearchParams(new FormData(form)).toString();
+    url.searchParams.delete('page');
+    table.classList.add('ajax-table-loading');
+    table.setAttribute('aria-busy', 'true');
+    try {
+      const response = await fetch(url, {
+        headers: { Accept: 'text/html', 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const pageDocument = new DOMParser().parseFromString(await response.text(), 'text/html');
+      const nextTable = pageDocument.querySelector(`[data-ajax-table="${tableId}"]`);
+      if (!nextTable) throw new Error('ไม่พบส่วนตารางในผลลัพธ์');
+
+      table.replaceWith(nextTable);
+      initializeSortableTables(nextTable);
+      initializeConfirmForms(nextTable);
+    } catch (error) {
+      table.classList.remove('ajax-table-loading');
+      table.removeAttribute('aria-busy');
+      Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'ค้นหารายการไม่สำเร็จ', text: 'กรุณาลองใหม่อีกครั้ง', showConfirmButton: false, timer: 3000 });
+    }
   });
 
   window.downloadReceiptPng = () => {

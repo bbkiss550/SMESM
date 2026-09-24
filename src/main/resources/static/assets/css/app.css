@@ -283,7 +283,9 @@ span.flatpickr-weekday { color: var(--sm-muted); font-weight: 700; }
 .money-total { padding-top: 12px; border-top: 1px solid var(--sm-border); font-size: 1.1rem; font-weight: 800; }
 .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(135px, 1fr)); overflow-x: auto; }
 .calendar-day { min-height: 145px; padding: 10px; border-right: 1px solid var(--sm-border); border-bottom: 1px solid var(--sm-border); }
-.calendar-event { display: block; margin-top: 7px; padding: 6px 7px; border-left: 3px solid var(--sm-primary); border-radius: 5px; color: var(--sm-text); background: rgba(8,120,249,.07); font-size: .72rem; }
+.calendar-event { display: block; width: 100%; margin-top: 7px; padding: 6px 7px; border: 0; border-left: 3px solid var(--sm-primary); border-radius: 5px; color: var(--sm-text); background: rgba(8,120,249,.07); font-family: inherit; font-size: .72rem; text-align: left; cursor: pointer; }
+.calendar-event:hover { background: rgba(8,120,249,.14); }
+.ajax-table-loading { opacity: .55; pointer-events: none; }
 .empty-state { padding: 45px 20px; text-align: center; color: var(--sm-muted); }
 .empty-state i { display: block; margin-bottom: 10px; font-size: 2.4rem; color: #a7c8ee; }
 .mobile-nav-toggle { display: none; }

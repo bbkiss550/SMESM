@@ -223,7 +223,7 @@
                   </div>
                   <div class="col-md-6">
                     <label class="form-label">เบอร์ติดต่อสำหรับงานนี้</label
-                    ><input class="form-control" th:field="*{contactPhone}" />
+                    ><input class="form-control" th:field="*{contactPhone}" maxlength="10" inputmode="numeric" data-phone-counter />
                   </div>
                   <div class="col-md-6">
                     <label class="form-label">ภาษีมูลค่าเพิ่ม</label
@@ -321,7 +321,10 @@
           !document.querySelector('[name="contactPhone"]').value
         )
           document.querySelector('[name="contactPhone"]').value =
-            o.dataset.phone;
+            o.dataset.phone.slice(0, 10);
+        document.querySelector('[name="contactPhone"]')?.dispatchEvent(
+          new Event("input", { bubbles: true }),
+        );
       });
     </script>
   </body>

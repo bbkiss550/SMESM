@@ -14,8 +14,12 @@
               วางแผนงานบริการ จัดการหัวหน้าช่างได้อย่างมีประสิทธิภาพ
             </p>
           </div>
-          <a class="btn btn-primary" th:href="@{/jobs/new}"
-            ><i class="bi bi-plus-lg me-2"></i>สร้างใบงาน</a
+          <button
+            class="btn btn-primary"
+            type="button"
+            data-bs-toggle="modal"
+            data-bs-target="#createCalendarJobModal"
+            ><i class="bi bi-plus-lg me-2"></i>สร้างใบงาน</button
           >
         </div>
         <section class="card">
@@ -65,10 +69,13 @@
               th:classappend="${!day.currentMonth}?'opacity-50'"
             >
               <strong th:text="${day.date.dayOfMonth}"></strong
-              ><a
+              ><button
+                type="button"
                 class="calendar-event"
                 th:each="job:${day.jobs}"
-                th:href="@{/jobs/{id}(id=${job.id})}"
+                data-bs-toggle="modal"
+                data-bs-target="#calendarJobModal"
+                th:attr="data-job-details-url=@{/calendar/jobs/{id}/details(id=${job.id})},data-job-url=@{/jobs/{id}(id=${job.id})}"
                 th:style="${job.jobStatus.name()=='COMPLETED'?'border-color:#10b981':(job.jobStatus.name()=='WAITING_PART'?'border-color:#f59e0b':'')}"
                 ><strong
                   th:text="${#temporals.format(job.appointmentStart,'HH:mm')+' '+job.customer.displayName}"
@@ -80,11 +87,64 @@
                 ><small
                   th:text="${job.technician != null ? job.technician.firstName : 'ยังไม่มอบหมาย'}"
                 ></small
-              ></a>
+              ></button>
             </div>
           </div>
         </section>
       </main>
+    </div>
+    <div
+      class="modal fade"
+      id="calendarJobModal"
+      tabindex="-1"
+      aria-labelledby="calendarJobModalTitle"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered modal-fullscreen-lg-down">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title fs-5" id="calendarJobModalTitle">รายละเอียดใบงาน</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="ปิด"></button>
+          </div>
+          <div class="modal-body" id="calendarJobModalBody" aria-live="polite">
+            <div class="d-flex justify-content-center align-items-center gap-2 py-5 text-muted">
+              <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+              กำลังโหลดรายละเอียดใบงาน...
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ปิด</button>
+            <a id="calendarJobDetailLink" class="btn btn-primary" href="#">
+              <i class="bi bi-box-arrow-up-right me-1"></i>ไปหน้าใบงาน
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="modal fade"
+      id="createCalendarJobModal"
+      data-reset-on-open
+      tabindex="-1"
+      aria-labelledby="createCalendarJobModalTitle"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered modal-fullscreen-lg-down">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title fs-5" id="createCalendarJobModalTitle">สร้างใบงานใหม่</h2>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="ปิด"
+            ></button>
+          </div>
+          <div class="modal-body p-0">
+            <div th:replace="~{job/form :: jobCreateForm}"></div>
+          </div>
+        </div>
+      </div>
     </div>
     <div th:replace="~{fragments/layout :: scripts}"></div>
   </body>

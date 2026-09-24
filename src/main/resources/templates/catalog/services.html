@@ -21,7 +21,7 @@
             <i class="bi bi-plus-lg me-2"></i>เพิ่มบริการ
           </button>
         </div>
-        <form class="card filter-bar">
+        <form class="card filter-bar" data-ajax-search="services">
           <div class="input-group">
             <span class="input-group-text bg-transparent"
               ><i class="bi bi-search"></i></span
@@ -33,7 +33,7 @@
             /><button class="btn btn-outline-primary">ค้นหา</button>
           </div>
         </form>
-        <section class="card">
+        <section class="card" data-ajax-table="services">
           <div class="table-responsive">
             <table class="table table-hover">
               <thead>
@@ -44,7 +44,7 @@
                   <th class="text-end">ราคามาตรฐาน</th>
                   <th>ระยะเวลา</th>
                   <th>สถานะ</th>
-                  <th></th>
+                  <th>จัดการ</th>
                 </tr>
               </thead>
               <tbody>
@@ -68,25 +68,25 @@
                     ></span>
                   </td>
                   <td>
-                    <form
-                      class="js-confirm"
-                      th:action="@{/services/{id}/toggle(id=${s.id})}"
-                      method="post"
-                    >
-                      <button
-                        class="btn btn-sm btn-outline-secondary"
-                        th:text="${s.active?'ปิด':'เปิด'}"
-                      ></button>
-                    </form>
+                    <div class="d-flex flex-wrap gap-1">
+                      <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#serviceModal" data-edit-kind="service"
+                        th:attr="data-id=${s.id},data-service-name=${s.serviceName},data-description=${s.description},data-default-price=${s.defaultPrice},data-default-duration-minutes=${s.defaultDurationMinutes}">
+                        <i class="bi bi-pencil me-1"></i>แก้ไข
+                      </button>
+                      <form class="js-confirm" th:action="@{/services/{id}/toggle(id=${s.id})}" method="post" th:attr="data-confirm-title=${s.active?'ลบบริการนี้?':'เปิดใช้งานบริการนี้?'},data-confirm-text=${s.active?'ระบบจะปิดใช้งานและเก็บประวัติบริการไว้':'บริการจะกลับมาใช้งานได้'}">
+                        <button class="btn btn-sm btn-outline-danger" th:text="${s.active?'ลบ':'เปิดใช้งาน'}"></button>
+                      </form>
+                    </div>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
+          <div th:replace="~{fragments/layout :: pagination(page=${services}, baseUrl='/services', q=${q}, status=null)}"></div>
         </section>
       </main>
     </div>
-    <div class="modal fade" id="serviceModal">
+    <div class="modal fade" id="serviceModal" data-reset-on-open data-create-action="/services" data-create-title="เพิ่มบริการ" data-create-submit="บันทึกบริการ">
       <div class="modal-dialog">
         <form
           class="modal-content"
@@ -95,7 +95,7 @@
           method="post"
         >
           <div class="modal-header">
-            <h5 class="modal-title">เพิ่มบริการ</h5>
+            <h5 class="modal-title" data-form-title>เพิ่มบริการ</h5>
             <button class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
@@ -130,7 +130,7 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button class="btn btn-primary">บันทึกบริการ</button>
+            <button class="btn btn-primary" data-form-submit>บันทึกบริการ</button>
           </div>
         </form>
       </div>

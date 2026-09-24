@@ -34,11 +34,30 @@ public class CustomerController {
         return "redirect:/customers/" + customer.getId();
     }
 
+    @PostMapping("/{id}")
+    public String update(@PathVariable Long id, @Valid CustomerForm form, BindingResult result, RedirectAttributes redirect) {
+        if (result.hasErrors()) {
+            redirect.addFlashAttribute("errorMessage", "กรุณาตรวจสอบข้อมูลลูกค้า");
+        } else {
+            service.update(id, form);
+            redirect.addFlashAttribute("successMessage", "แก้ไขข้อมูลลูกค้าเรียบร้อยแล้ว");
+        }
+        return "redirect:/customers";
+    }
+
     @GetMapping("/{id}")
-    public String detail(@PathVariable Long id, Model model) {
+    public String detail(@PathVariable Long id, @RequestParam(defaultValue="0") int page, Model model) {
         Customer customer = customers.findOneWithPhonesById(id).orElseThrow(() -> new ResourceNotFoundException("ไม่พบลูกค้า"));
-        model.addAttribute("customer", customer); model.addAttribute("jobs", jobs.findTop20ByCustomerIdOrderByAppointmentStartDesc(id));
+        model.addAttribute("customer", customer); model.addAttribute("jobs", jobs.findByCustomerIdOrderByAppointmentStartDesc(id, PageRequest.of(page, 10)));
         return "customer/detail";
+    }
+
+    @GetMapping("/{id}/details")
+    public String modalDetails(@PathVariable Long id, @RequestParam(defaultValue="0") int page, Model model) {
+        Customer customer = customers.findOneWithPhonesById(id).orElseThrow(() -> new ResourceNotFoundException("ไม่พบลูกค้า"));
+        model.addAttribute("customer", customer);
+        model.addAttribute("jobs", jobs.findByCustomerIdOrderByAppointmentStartDesc(id, PageRequest.of(page, 10)));
+        return "customer/modal-details :: content";
     }
 
     @PostMapping("/{id}/toggle")

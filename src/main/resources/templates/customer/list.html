@@ -21,7 +21,7 @@
             <i class="bi bi-plus-lg me-2"></i>เพิ่มลูกค้า
           </button>
         </div>
-        <form class="card filter-bar">
+        <form class="card filter-bar" data-ajax-search="customers">
           <div class="input-group">
             <span class="input-group-text bg-transparent"
               ><i class="bi bi-search"></i></span
@@ -33,7 +33,7 @@
             /><button class="btn btn-outline-primary">ค้นหา</button>
           </div>
         </form>
-        <section class="card">
+        <section class="card" data-ajax-table="customers">
           <div class="table-responsive">
             <table class="table table-hover">
               <thead>
@@ -45,17 +45,13 @@
                   <th>ไลน์</th>
                   <th>ประเภท</th>
                   <th>สถานะ</th>
-                  <th></th>
+                  <th>จัดการ</th>
                 </tr>
               </thead>
               <tbody>
                 <tr th:each="c:${customers.content}">
                   <td>
-                    <a
-                      class="fw-bold"
-                      th:href="@{/customers/{id}(id=${c.id})}"
-                      th:text="${c.customerCode}"
-                    ></a>
+                    <span class="fw-bold" th:text="${c.customerCode}"></span>
                   </td>
                   <td th:text="${c.name}"></td>
                   <td th:text="${c.companyName ?: '-'}"></td>
@@ -72,22 +68,29 @@
                     ></span>
                   </td>
                   <td>
-                    <a class="icon-btn" th:href="@{/customers/{id}(id=${c.id})}"
-                      ><i class="bi bi-chevron-right"></i
-                    ></a>
+                    <div class="d-flex flex-wrap gap-1">
+                      <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#customerViewModal" data-view-kind="customer"
+                        th:attr="data-customer-details-url=@{/customers/{id}/details(id=${c.id})}">
+                        <i class="bi bi-eye me-1"></i>ดูข้อมูล
+                      </button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#customerModal" data-edit-kind="customer"
+                        th:attr="data-id=${c.id},data-customer-type=${c.customerType},data-name=${c.name},data-company-name=${c.companyName},data-tax-id=${c.taxId},data-primary-phone=${c.primaryPhone == '-' ? '' : c.primaryPhone},data-secondary-phone=${c.secondaryPhone},data-email=${c.email},data-line-id=${c.lineId},data-address=${c.address},data-note=${c.note}">
+                        <i class="bi bi-pencil me-1"></i>แก้ไข
+                      </button>
+                      <form class="js-confirm" th:action="@{/customers/{id}/toggle(id=${c.id})}" method="post" th:attr="data-confirm-title=${c.active?'ลบลูกค้านี้?':'เปิดใช้งานลูกค้านี้?'},data-confirm-text=${c.active?'ระบบจะปิดใช้งานและเก็บประวัติลูกค้าไว้':'ลูกค้าจะกลับมาใช้งานได้'}">
+                        <button class="btn btn-sm btn-outline-danger" th:text="${c.active?'ลบ':'เปิดใช้งาน'}"></button>
+                      </form>
+                    </div>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <div
-            class="card-body text-muted small"
-            th:text="'ทั้งหมด '+${customers.totalElements}+' รายการ'"
-          ></div>
+          <div th:replace="~{fragments/layout :: pagination(page=${customers}, baseUrl='/customers', q=${q}, status=null)}"></div>
         </section>
       </main>
     </div>
-    <div class="modal fade" id="customerModal">
+    <div class="modal fade" id="customerModal" data-reset-on-open data-create-action="/customers" data-create-title="เพิ่มลูกค้า" data-create-submit="บันทึกลูกค้า">
       <div class="modal-dialog modal-lg">
         <form
           class="modal-content"
@@ -96,7 +99,7 @@
           method="post"
         >
           <div class="modal-header">
-            <h5 class="modal-title">เพิ่มลูกค้า</h5>
+            <h5 class="modal-title" data-form-title>เพิ่มลูกค้า</h5>
             <button class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
@@ -125,12 +128,15 @@
                 ><input
                   class="form-control"
                   th:field="*{primaryPhone}"
+                  maxlength="10"
+                  inputmode="numeric"
+                  data-phone-counter
                   required
                 />
               </div>
               <div class="col-md-6">
                 <label class="form-label">เบอร์สำรอง</label
-                ><input class="form-control" th:field="*{secondaryPhone}" />
+                ><input class="form-control" th:field="*{secondaryPhone}" maxlength="10" inputmode="numeric" data-phone-counter />
               </div>
               <div class="col-md-6">
                 <label class="form-label">อีเมล</label
@@ -155,9 +161,20 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button class="btn btn-primary">บันทึกลูกค้า</button>
+            <button class="btn btn-primary" data-form-submit>บันทึกลูกค้า</button>
           </div>
         </form>
+      </div>
+    </div>
+    <div class="modal fade" id="customerViewModal" tabindex="-1" aria-labelledby="customerViewModalTitle" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <div><h2 class="modal-title fs-5" id="customerViewModalTitle">รายละเอียดลูกค้า</h2><small class="text-muted" data-customer-view="code"></small></div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="ปิด"></button>
+          </div>
+          <div class="modal-body" id="customerViewModalBody" aria-live="polite"><div class="d-flex justify-content-center align-items-center gap-2 py-5 text-muted"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span>กำลังโหลดข้อมูลลูกค้า...</div></div>
+        </div>
       </div>
     </div>
     <div th:replace="~{fragments/layout :: scripts}"></div>

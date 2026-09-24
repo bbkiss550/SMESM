@@ -1,0 +1,35 @@
+<th:block th:fragment="content" xmlns:th="http://www.thymeleaf.org">
+  <div class="row g-3 mb-4">
+    <div class="col-md-6"><small class="text-muted">รหัสลูกค้า</small><div class="fw-semibold" th:text="${customer.customerCode}"></div></div>
+    <div class="col-md-6"><small class="text-muted">ประเภทลูกค้า</small><div th:text="${customer.customerType.name()=='BUSINESS'?'นิติบุคคล':'บุคคลทั่วไป'}"></div></div>
+    <div class="col-md-6"><small class="text-muted">ชื่อผู้ติดต่อ</small><div th:text="${customer.name}"></div></div>
+    <div class="col-md-6"><small class="text-muted">ชื่อบริษัท</small><div th:text="${customer.companyName ?: '-'}"></div></div>
+    <div class="col-md-6"><small class="text-muted">เบอร์โทร</small><div th:each="phone:${customer.phones}" th:if="${phone.active}" th:text="${phone.phone+' · '+phone.label}"></div></div>
+    <div class="col-md-6"><small class="text-muted">อีเมล / ไอดีไลน์</small><div th:text="${(customer.email ?: '-')+' / '+(customer.lineId ?: '-')}"></div></div>
+    <div class="col-12"><small class="text-muted">ที่อยู่</small><div class="text-break" th:text="${customer.address ?: '-'}"></div></div>
+  </div>
+  <section class="card" data-ajax-table="customer-history">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h3 class="section-title mb-0">ประวัติการใช้บริการ</h3>
+      <span class="small text-muted" th:text="${jobs.totalElements+' รายการ'}"></span>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr><th>เลขที่ใบงาน</th><th>วันนัดหมาย</th><th>บริการ</th><th>หัวข้องาน</th><th>ยอดรวม</th><th>สถานะ</th><th>ดูข้อมูล</th></tr></thead>
+        <tbody>
+          <tr th:each="job:${jobs.content}">
+            <td class="fw-semibold" th:text="${job.jobNo}"></td>
+            <td th:text="${#temporals.format(job.appointmentStart,'dd/MM/yyyy HH:mm')}"></td>
+            <td th:text="${job.service.serviceName}"></td>
+            <td th:text="${job.title}"></td>
+            <td class="text-end" th:text="'฿'+${#numbers.formatDecimal(job.grandTotal,1,'COMMA',2,'POINT')}"></td>
+            <td><span class="status-badge" th:classappend="'status-'+${job.jobStatus}" th:text="${statusLabels[job.jobStatus.name()]}"></span></td>
+            <td><a class="btn btn-sm btn-outline-primary text-nowrap" th:href="@{/jobs/{id}(id=${job.id})}"><i class="bi bi-eye me-1"></i>ดูใบงาน</a></td>
+          </tr>
+          <tr th:if="${jobs.empty}"><td colspan="7" class="text-center text-muted py-4">ลูกค้ารายนี้ยังไม่มีประวัติการใช้บริการ</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div th:replace="~{fragments/layout :: pagination(page=${jobs}, baseUrl=${'/customers/' + customer.id + '/details'}, q='', status=null)}"></div>
+  </section>
+</th:block>

@@ -22,6 +22,7 @@ public class UserManagementService {
     }
 
     @Transactional public void toggle(Long id){User u=users.findById(id).orElseThrow(() -> new ResourceNotFoundException("ไม่พบผู้ใช้งาน"));if("admin".equalsIgnoreCase(u.getUsername())&&u.isActive())throw new BusinessException("ไม่สามารถปิดใช้งานบัญชีผู้ดูแลหลัก");if(u.isActive())u.deactivate();else u.activate();}
+    @Transactional public void update(Long id,String firstName,String lastName,String phone,String email,Long roleId){User u=users.findById(id).orElseThrow(() -> new ResourceNotFoundException("ไม่พบผู้ใช้งาน"));u.setFirstName(firstName.trim());u.setLastName(lastName.trim());u.setPhone(phone);u.setEmail(email);u.setRole(roles.findById(roleId).orElseThrow(() -> new ResourceNotFoundException("ไม่พบบทบาท")));}
     @Transactional public String resetPassword(Long id){User u=users.findById(id).orElseThrow(() -> new ResourceNotFoundException("ไม่พบผู้ใช้งาน"));String password=randomPassword();u.setPassword(encoder.encode(password));u.setForcePasswordChange(true);return password;}
     private String randomPassword(){StringBuilder value=new StringBuilder(10);for(int i=0;i<10;i++)value.append(ALPHABET.charAt(random.nextInt(ALPHABET.length())));return value.toString();}
 }

@@ -1,0 +1,158 @@
+<th:block th:fragment="content" xmlns:th="http://www.thymeleaf.org">
+  <div class="detail-grid calendar-job-detail-grid">
+    <div class="d-grid gap-3">
+      <section class="card">
+        <div class="card-header d-flex justify-content-between align-items-center gap-2">
+          <div>
+            <div class="small text-muted" th:text="${job.jobNo}"></div>
+            <h3 class="section-title mb-0" th:text="${job.title}"></h3>
+          </div>
+          <div class="d-flex flex-wrap justify-content-end gap-2">
+            <span class="status-badge" th:classappend="'status-'+${job.jobStatus}" th:text="${statusLabels[job.jobStatus.name()]}"></span>
+            <span class="status-badge priority-URGENT" th:if="${job.priority.name()=='URGENT'}"><i class="bi bi-fire"></i>ด่วน</span>
+            <span class="badge text-bg-warning" th:if="${job.jobType.name()=='REWORK'}">งานแก้</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="info-grid">
+            <div class="info-block">
+              <div class="info-label">ลูกค้า</div>
+              <div class="info-value" th:text="${job.customer.displayName}"></div>
+              <div class="small" th:each="phone:${job.customer.phones}" th:if="${phone.active}">
+                <span th:text="${phone.phone}"></span>
+                <span class="text-muted" th:text="' · '+${phone.label}"></span>
+              </div>
+              <div class="small text-muted" th:text="${job.customer.email ?: '-'}"></div>
+            </div>
+            <div class="info-block">
+              <div class="info-label">บริการ / ประเภทงาน</div>
+              <div class="info-value" th:text="${job.service.serviceName}"></div>
+              <div class="small text-muted" th:text="${job.jobType.name()=='REWORK' ? 'งานแก้จาก '+job.originalJob.jobNo : 'งานปกติ'}"></div>
+              <div class="info-label mt-3">หัวหน้าช่าง</div>
+              <div class="info-value" th:text="${job.technician != null ? job.technician.fullName : 'ยังไม่มอบหมาย'}"></div>
+            </div>
+            <div class="info-block">
+              <div class="info-label">กำหนดการ</div>
+              <div class="info-value" th:text="${#temporals.format(job.appointmentStart,'dd/MM/yyyy HH:mm')+' – '+#temporals.format(job.appointmentEnd,'dd/MM/yyyy HH:mm')}"></div>
+              <div class="info-label mt-3">เบอร์ติดต่อในงาน</div>
+              <div class="info-value" th:text="${job.contactPhone ?: '-'}"></div>
+            </div>
+          </div>
+          <hr />
+          <div class="row g-3">
+            <div class="col-12">
+              <div class="info-label">สถานที่ให้บริการ</div>
+              <div class="info-value text-break" th:text="${job.address}"></div>
+            </div>
+            <div class="col-12">
+              <div class="info-label">รายละเอียดงาน</div>
+              <div class="text-break" th:text="${job.description ?: '-'}"></div>
+            </div>
+            <div class="col-12" th:if="${job.jobType.name()=='REWORK'}">
+              <div class="info-label">สาเหตุงานแก้</div>
+              <div th:text="${job.reworkReason ?: '-'}"></div>
+            </div>
+            <div class="col-12" th:if="${job.internalNote != null and !job.internalNote.isBlank()}">
+              <div class="info-label">หมายเหตุภายใน</div>
+              <div class="text-break" th:text="${job.internalNote}"></div>
+            </div>
+            <div class="col-12" th:if="${job.cancelReason != null and !job.cancelReason.isBlank()}">
+              <div class="info-label">เหตุผลที่ยกเลิก</div>
+              <div class="text-break" th:text="${job.cancelReason}"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header"><h3 class="section-title mb-0"><i class="bi bi-list-ul text-primary me-2"></i>รายการค่าใช้จ่าย</h3></div>
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead><tr><th>#</th><th>รายการ</th><th>ประเภท</th><th class="text-end">จำนวน</th><th>หน่วย</th><th class="text-end">ราคาต่อหน่วย</th><th class="text-end">จำนวนเงิน</th></tr></thead>
+            <tbody>
+              <tr th:each="item,st:${job.items}" th:if="${item.active}">
+                <td th:text="${st.count}"></td>
+                <td th:text="${item.description}"></td>
+                <td th:text="${enumLabels[item.itemType.name()]}"></td>
+                <td class="text-end" th:text="${item.quantity}"></td>
+                <td th:text="${item.unit}"></td>
+                <td class="text-end" th:text="${#numbers.formatDecimal(item.unitPrice,1,'COMMA',2,'POINT')}"></td>
+                <td class="text-end" th:text="${#numbers.formatDecimal(item.total,1,'COMMA',2,'POINT')}"></td>
+              </tr>
+              <tr th:if="${#lists.isEmpty(job.items.?[active])}"><td colspan="7" class="text-center text-muted py-3">ยังไม่มีรายการค่าใช้จ่าย</td></tr>
+            </tbody>
+            <tfoot>
+              <tr><td colspan="6" class="text-end">รวมเป็นเงิน</td><td class="text-end" th:text="${#numbers.formatDecimal(job.subtotal,1,'COMMA',2,'POINT')}"></td></tr>
+              <tr><td colspan="6" class="text-end">ส่วนลด</td><td class="text-end" th:text="${#numbers.formatDecimal(job.discount,1,'COMMA',2,'POINT')}"></td></tr>
+              <tr><td colspan="6" class="text-end">ฐานภาษี</td><td class="text-end" th:text="${#numbers.formatDecimal(job.taxBase,1,'COMMA',2,'POINT')}"></td></tr>
+              <tr><td colspan="6" class="text-end">VAT <span th:text="${#numbers.formatDecimal(job.vatRate,1,'COMMA',2,'POINT')+'%'}"></span></td><td class="text-end" th:text="${#numbers.formatDecimal(job.vatAmount,1,'COMMA',2,'POINT')}"></td></tr>
+              <tr class="fw-bold text-primary"><td colspan="6" class="text-end">ยอดรวมสุทธิ</td><td class="text-end" th:text="${#numbers.formatDecimal(job.grandTotal,1,'COMMA',2,'POINT')}"></td></tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <aside class="d-grid gap-3 align-content-start">
+      <section class="card">
+        <div class="card-header"><h3 class="section-title mb-0"><i class="bi bi-wallet2 text-primary me-2"></i>สรุปการชำระเงิน</h3></div>
+        <div class="card-body">
+          <div class="money-summary">
+            <div class="money-row"><span>ยอดสุทธิ</span><strong th:text="'฿'+${#numbers.formatDecimal(job.grandTotal,1,'COMMA',2,'POINT')}"></strong></div>
+            <div class="money-row text-success"><span>รับชำระแล้ว</span><strong th:text="'฿'+${#numbers.formatDecimal(paid,1,'COMMA',2,'POINT')}"></strong></div>
+            <div class="money-row text-warning" th:if="${refunded.signum()>0}"><span>คืนเงินแล้ว</span><strong th:text="'฿'+${#numbers.formatDecimal(refunded,1,'COMMA',2,'POINT')}"></strong></div>
+            <div class="money-row money-total"><span>คงเหลือ</span><strong class="text-danger" th:text="'฿'+${#numbers.formatDecimal(job.grandTotal.subtract(paid.subtract(refunded)).max(T(java.math.BigDecimal).ZERO),1,'COMMA',2,'POINT')}"></strong></div>
+            <span class="status-badge" th:classappend="'status-'+${job.paymentStatus}" th:text="${statusLabels[job.paymentStatus.name()]}"></span>
+          </div>
+        </div>
+        <div class="list-group list-group-flush" th:if="${!#lists.isEmpty(payments)}">
+          <a class="list-group-item list-group-item-action" th:each="payment:${payments}" th:href="@{/payments/{id}/receipt(id=${payment.id})}" target="_blank">
+            <div class="d-flex justify-content-between gap-2"><strong th:text="${payment.receiptNo}"></strong><span th:text="'฿'+${#numbers.formatDecimal(payment.amount,1,'COMMA',2,'POINT')}"></span></div>
+            <small class="text-muted" th:text="${#temporals.format(payment.paymentDate,'dd/MM/yyyy HH:mm')+' · '+enumLabels[payment.paymentMethod.name()]}"></small>
+          </a>
+        </div>
+        <div class="list-group list-group-flush" th:if="${!#lists.isEmpty(refunds)}">
+          <a class="list-group-item list-group-item-action" th:each="refund:${refunds}" th:href="@{/refunds/{id}/receipt(id=${refund.id})}" target="_blank">
+            <div class="d-flex justify-content-between gap-2"><strong th:text="${refund.receiptNo}"></strong><span class="text-warning" th:text="'คืน ฿'+${#numbers.formatDecimal(refund.amount,1,'COMMA',2,'POINT')}"></span></div>
+            <small class="text-muted" th:text="${#temporals.format(refund.refundDate,'dd/MM/yyyy HH:mm')+' · '+refund.reason}"></small>
+          </a>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header"><h3 class="section-title mb-0"><i class="bi bi-clock-history text-primary me-2"></i>ประวัติการดำเนินงาน</h3></div>
+        <div class="card-body">
+          <div class="timeline" th:if="${!#lists.isEmpty(job.activities)}">
+            <div class="timeline-item" th:each="activity:${job.activities}">
+              <strong th:text="${activity.description}"></strong>
+              <div class="small text-muted" th:text="${#temporals.format(activity.activityDate,'dd/MM/yyyy HH:mm')}"></div>
+              <small th:if="${activity.user != null}" th:text="'โดย '+${activity.user.fullName}"></small>
+            </div>
+          </div>
+          <div th:if="${#lists.isEmpty(job.activities)}" class="text-muted">ยังไม่มีประวัติ</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header"><h3 class="section-title mb-0"><i class="bi bi-camera-fill text-primary me-2"></i>รูปภาพและเอกสาร</h3></div>
+        <div class="card-body">
+          <div class="attachment-grid" th:if="${!#lists.isEmpty(job.attachments)}">
+            <a class="attachment-thumb" th:each="attachment:${job.attachments}" th:href="@{/jobs/attachments/{id}(id=${attachment.id})}" target="_blank">
+              <img th:if="${attachment.image}" th:src="@{/jobs/attachments/{id}(id=${attachment.id})}" th:alt="${attachment.originalFileName}" />
+              <span th:unless="${attachment.image}" class="d-grid h-100 place-items-center p-3 text-center"><i class="bi bi-file-earmark fs-2"></i><small th:text="${attachment.originalFileName}"></small></span>
+              <span class="position-absolute bottom-0 start-0 badge text-bg-dark m-2" th:text="${enumLabels[attachment.attachmentType.name()]}"></span>
+            </a>
+          </div>
+          <div th:if="${#lists.isEmpty(job.attachments)}" class="text-muted">ยังไม่มีรูปภาพหรือเอกสารแนบ</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-body">
+          <div class="small text-muted">ลิงก์ติดตามงานสำหรับลูกค้า</div>
+          <a class="small text-break" th:href="@{/track/{token}(token=${job.publicToken})}" target="_blank" th:text="${'/track/'+job.publicToken}"></a>
+        </div>
+      </section>
+    </aside>
+  </div>
+</th:block>
