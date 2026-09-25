@@ -2,11 +2,33 @@ HELP.md
 target/
 storage/uploads/
 .env
+.env.*
+!.env.example
 *.log
 node_modules/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+
+# Local credentials and certificates
+credentials.*
+secrets.*
+application-local.yml
+application-local.properties
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+
+# Local database exports (Flyway source migrations are under src/main/resources)
+/db/*.sql
+/db/*.dump
+/db/*.backup
+/db/*.sql.gz
+*.dump
+*.backup
+*.sql.gz
 
 ### STS ###
 .apt_generated
@@ -35,3 +57,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### OS ###
+.DS_Store
+Thumbs.db
