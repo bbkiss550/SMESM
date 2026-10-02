@@ -203,7 +203,7 @@
                           th:text="${enumLabels[item.itemType.name()]}"
                         ></span>
                       </td>
-                      <td class="text-end" th:text="${item.quantity}"></td>
+                      <td class="text-end" th:text="${#numbers.formatDecimal(item.quantity,1,'COMMA',0,'POINT')}"></td>
                       <td th:text="${item.unit}"></td>
                       <td
                         class="text-end"
@@ -395,6 +395,7 @@
                   class="list-group-item list-group-item-action"
                   th:each="p:${payments}"
                   th:href="@{/payments/{id}/receipt(id=${p.id})}"
+                  data-receipt-preview
                   target="_blank"
                   ><div class="d-flex justify-content-between">
                     <strong th:text="${p.receiptNo}"></strong
@@ -460,7 +461,7 @@
                 <option
                   th:each="p:${products}"
                   th:value="${p.id}"
-                  th:text="${p.productCode+' · '+p.productName+' (คงเหลือ '+p.stockQty+')'}"
+                  th:text="${p.productCode+' · '+p.productName+' (คงเหลือ '+#numbers.formatDecimal(p.stockQty,1,'COMMA',0,'POINT')+')'}"
                   th:data-price="${p.salePrice}"
                   th:data-unit="${p.unit}"
                 ></option>
@@ -651,8 +652,6 @@
                 </div>
               </div>
             </div>
-            <label class="form-label">เลขอ้างอิง</label
-            ><input class="form-control" th:field="*{referenceNo}" />
           </div>
           <div class="modal-footer">
             <button class="btn btn-primary">บันทึกการชำระ</button>
@@ -758,7 +757,7 @@
               <label class="form-label">อะไหล่ที่คืนเข้าสต๊อก</label>
               <div class="form-check" th:each="item:${job.items}" th:if="${item.active and item.itemType.name()=='PRODUCT'}">
                 <input class="form-check-input" type="checkbox" th:field="*{returnItemIds}" th:value="${item.id}" />
-                <label class="form-check-label" th:text="${item.description+' · '+item.quantity+' '+item.unit}"></label>
+                <label class="form-check-label" th:text="${item.description+' · '+#numbers.formatDecimal(item.quantity,1,'COMMA',0,'POINT')+' '+item.unit}"></label>
               </div>
               <small class="text-muted">รายการที่ไม่เลือกจะถือว่าใช้ไปแล้วและไม่คืนสต๊อก</small>
             </div>

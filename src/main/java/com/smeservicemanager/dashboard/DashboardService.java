@@ -15,6 +15,34 @@ public class DashboardService {
 
     public DashboardService(JdbcClient jdbc) { this.jdbc = jdbc; }
 
+    public DetailPage details(String kind, int page) {
+        String condition = switch (kind) {
+            case "all" -> "true";
+            case "today" -> "j.j_appointment_start::date = current_date";
+            case "progress" -> "j.j_job_status = 'IN_PROGRESS'";
+            case "scheduled" -> "j.j_job_status in ('SCHEDULED','ASSIGNED')";
+            case "completed" -> "j.j_job_status = 'COMPLETED' and date_trunc('month', j.j_completed_date) = date_trunc('month', current_date)";
+            case "revenue" -> "p.status='A' and p.p_record_status='ACTIVE' and date_trunc('month', p.p_payment_date)=date_trunc('month', current_date)";
+            default -> throw new IllegalArgumentException("ไม่พบรายการสรุป");
+        };
+        boolean revenue = kind.equals("revenue");
+        String from = revenue
+                ? " from t_payment p join t_job j on j.id_t_job=p.id_t_job join m_customer c on c.id_m_customer=j.id_m_customer where " + condition
+                : " from t_job j join m_customer c on c.id_m_customer=j.id_m_customer where j.status='A' and " + condition;
+        long total = jdbc.sql("select count(*)" + from).query(Long.class).single();
+        int currentPage = Math.min(Math.max(0, page), (int) Math.max(0, (total - 1) / 10));
+        String fields = "select j.j_job_no as job_no, coalesce(nullif(c.c_company_name,''),c.c_name) as customer, j.j_title as title, j.j_job_status as job_status, ";
+        fields += revenue
+                ? "p.p_payment_no as document_no, p.p_amount as amount, to_char(p.p_payment_date,'DD/MM/YYYY HH24:MI') as date_label"
+                : "j.j_job_no as document_no, j.j_grand_total as amount, to_char(j.j_appointment_start,'DD/MM/YYYY HH24:MI') as date_label";
+        String order = revenue ? "p.p_payment_date desc, p.id_t_payment desc" : "j.j_appointment_start desc, j.id_t_job desc";
+        var rows = jdbc.sql(fields + from + " order by " + order + " limit 10 offset :offset")
+                .param("offset", currentPage * 10).query().listOfRows();
+        return new DetailPage(rows, total, currentPage, (int) ((total + 9) / 10));
+    }
+
+    public record DetailPage(List<Map<String, Object>> rows, long total, int page, int totalPages) {}
+
     public DashboardSummary summary() {
         Map<String, Object> row = jdbc.sql("""
                 select count(*) as total_jobs,

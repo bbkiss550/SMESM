@@ -4,6 +4,8 @@ import com.smeservicemanager.shared.domain.DomainTypes.PaymentMethod;
 import com.smeservicemanager.shared.domain.DomainTypes.PaymentType;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -16,6 +18,7 @@ import java.time.LocalTime;
 @Getter @Setter
 public class PaymentForm {
     @NotNull @Positive
+    @Digits(integer = 12, fraction = 2)
     private BigDecimal amount;
     @NotNull
     private PaymentType paymentType = PaymentType.DEPOSIT;
@@ -27,6 +30,7 @@ public class PaymentForm {
     @NotNull
     @DateTimeFormat(pattern = "HH:mm")
     private LocalTime paymentTime = LocalTime.now().withSecond(0).withNano(0);
+    @Size(max = 100)
     private String referenceNo;
     private String note;
 

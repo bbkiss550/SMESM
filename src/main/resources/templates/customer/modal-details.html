@@ -24,7 +24,8 @@
             <td th:text="${job.title}"></td>
             <td class="text-end" th:text="'฿'+${#numbers.formatDecimal(job.grandTotal,1,'COMMA',2,'POINT')}"></td>
             <td><span class="status-badge" th:classappend="'status-'+${job.jobStatus}" th:text="${statusLabels[job.jobStatus.name()]}"></span></td>
-            <td><a class="btn btn-sm btn-outline-primary text-nowrap" th:href="@{/jobs/{id}(id=${job.id})}"><i class="bi bi-eye me-1"></i>ดูใบงาน</a></td>
+            <td><button type="button" class="btn btn-sm btn-outline-primary text-nowrap" data-customer-job-details
+              th:attr="data-job-details-url=@{/calendar/jobs/{id}/details(id=${job.id})}"><i class="bi bi-eye me-1"></i>ดูใบงาน</button></td>
           </tr>
           <tr th:if="${jobs.empty}"><td colspan="7" class="text-center text-muted py-4">ลูกค้ารายนี้ยังไม่มีประวัติการใช้บริการ</td></tr>
         </tbody>

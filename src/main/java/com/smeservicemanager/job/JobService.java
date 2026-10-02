@@ -147,6 +147,27 @@ public class JobService {
     }
 
     @Transactional
+    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+    public void reschedule(Long jobId, LocalDateTime start, LocalDateTime end, Long technicianId, String reason) {
+        Job job = jobs.findByIdForUpdate(jobId).orElseThrow(() -> new ResourceNotFoundException("ไม่พบใบงาน"));
+        if (!Set.of(JobStatus.NEW, JobStatus.SCHEDULED, JobStatus.ASSIGNED).contains(job.getJobStatus())) {
+            throw new BusinessException("เลื่อนนัดได้เฉพาะงานที่ยังไม่เริ่มดำเนินการ");
+        }
+        if (technicianId == null) throw new BusinessException("กรุณาเลือกหัวหน้าช่างสำหรับนัดหมายใหม่");
+        if (reason == null || reason.isBlank() || reason.length() > 500) throw new BusinessException("กรุณาระบุเหตุผลการเลื่อนนัดไม่เกิน 500 ตัวอักษร");
+        User selected = technician(technicianId);
+        validateSchedule(start, end, technicianId, jobId);
+        var formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        String before = job.getAppointmentStart().format(formatter) + " – " + job.getAppointmentEnd().format(formatter)
+                + " · " + (job.getTechnician() == null ? "ยังไม่มอบหมาย" : job.getTechnician().getFullName());
+        job.setAppointmentStart(start); job.setAppointmentEnd(end); job.setTechnician(selected); job.setJobStatus(JobStatus.ASSIGNED);
+        jobs.save(job);
+        String after = start.format(formatter) + " – " + end.format(formatter) + " · " + selected.getFullName();
+        addActivity(job, "JOB_RESCHEDULED", "เลื่อนนัด: " + reason.trim(), before, after);
+        notifyUser(selected, "JOB_RESCHEDULED", "นัดหมายงานใหม่", job.getJobNo() + " · " + after, "/my-jobs/" + jobId);
+    }
+
+    @Transactional
     public void transition(Long jobId, JobStatus target, String reason) {
         Job job = ownedJobForUpdate(jobId);
         JobStatus current = job.getJobStatus();

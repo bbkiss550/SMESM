@@ -118,10 +118,9 @@
                   <tbody>
                     <tr th:each="job:${jobs.content}">
                       <td>
-                        <a
-                          th:href="@{/jobs/{id}(id=${job.id})}"
+                        <span
                           th:text="${job.jobNo}"
-                        ></a>
+                        ></span>
                       </td>
                       <td
                         th:text="${#temporals.format(job.appointmentStart,'dd/MM/yyyy')}"

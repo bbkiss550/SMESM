@@ -187,7 +187,7 @@
               <option
                 th:each="p:${products}"
                 th:value="${p.id}"
-                th:text="${p.productName+' · คงเหลือ '+p.stockQty}"
+                th:text="${p.productName+' · คงเหลือ '+#numbers.formatDecimal(p.stockQty,1,'COMMA',0,'POINT')}"
                 th:data-price="${p.salePrice}"
                 th:data-unit="${p.unit}"
               ></option>

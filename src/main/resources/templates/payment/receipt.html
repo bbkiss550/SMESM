@@ -4,7 +4,7 @@
     th:replace="~{fragments/layout :: head(${refundDocument?'ใบคืนเงิน':'ใบเสร็จรับเงิน'})}"
   ></head>
   <body class="receipt-page">
-    <div class="no-print d-flex justify-content-center gap-2 mb-3">
+    <div th:if="${param.embedded == null}" class="no-print d-flex justify-content-center gap-2 mb-3">
       <button class="btn btn-primary" onclick="window.print()">
         <i class="bi bi-printer me-2"></i>พิมพ์ / บันทึกเป็นไฟล์ PDF</button
       ><button class="btn btn-outline-primary" onclick="downloadReceiptPng()">

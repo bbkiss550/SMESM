@@ -1,0 +1,24 @@
+<th:block th:fragment="content" xmlns:th="http://www.thymeleaf.org">
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <thead><tr><th th:text="${revenueDetails ? 'เลขที่การชำระเงิน' : 'เลขที่ใบงาน'}"></th><th>ลูกค้า</th><th>งาน</th><th>สถานะใบงาน</th><th th:text="${detailDateLabel}"></th><th class="text-end" th:text="${revenueDetails ? 'ยอดรับเงิน' : 'ยอดรวม'}"></th></tr></thead>
+      <tbody>
+        <tr th:each="row : ${details.rows}">
+          <td><span th:text="${row.document_no}"></span><div class="small text-muted" th:if="${revenueDetails}" th:text="${row.job_no}"></div></td>
+          <td th:text="${row.customer}"></td><td th:text="${row.title}"></td>
+          <td><span class="status-badge" th:classappend="'status-'+${row.job_status}" th:text="${statusLabels[row.job_status]}"></span></td>
+          <td th:text="${row.date_label}"></td><td class="text-end" th:text="'฿'+${#numbers.formatDecimal(row.amount,1,'COMMA',2,'POINT')}"></td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(details.rows)}"><td colspan="6" class="text-center text-muted py-4">ไม่พบรายการ</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="d-flex justify-content-between align-items-center gap-2 mt-3">
+    <span class="small text-muted" th:text="'ทั้งหมด '+${details.total}+' รายการ'"></span>
+    <div class="d-flex align-items-center gap-2">
+      <button type="button" class="btn btn-outline-primary btn-sm" data-dashboard-page th:attr="data-dashboard-page=${details.page - 1}" th:disabled="${details.page == 0}">ก่อนหน้า</button>
+      <span class="small" th:text="${details.page + 1}+' / '+${details.totalPages == 0 ? 1 : details.totalPages}"></span>
+      <button type="button" class="btn btn-outline-primary btn-sm" data-dashboard-page th:attr="data-dashboard-page=${details.page + 1}" th:disabled="${details.page + 1 >= details.totalPages}">ถัดไป</button>
+    </div>
+  </div>
+</th:block>

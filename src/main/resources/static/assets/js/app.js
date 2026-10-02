@@ -41,6 +41,25 @@
     input.addEventListener('input', () => updatePhoneCounter(input));
   });
 
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape' || event.defaultPrevented || event.isComposing || Swal.isVisible()) return;
+    if (document.querySelector('.flatpickr-calendar.open')) return;
+    const slipZoom = document.querySelector('.modal.show [data-slip-zoom]:not([hidden])');
+    if (slipZoom) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      slipZoom.querySelector('[data-slip-zoom-close]').click();
+      return;
+    }
+
+    const openModals = [...document.querySelectorAll('.modal.show')];
+    if (!openModals.length) return;
+    const activeModal = document.activeElement?.closest('.modal.show') || openModals.at(-1);
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    bootstrap.Modal.getOrCreateInstance(activeModal).hide();
+  }, true);
+
   document.addEventListener('show.bs.modal', event => {
     const modal = event.target;
     if (!modal.matches('[data-reset-on-open]')) return;
@@ -106,6 +125,7 @@
       select.value = emptyOption ? '' : (select.options[0]?.value ?? '');
       select.dispatchEvent(new Event('change', { bubbles: true }));
     });
+    form.applyJobScheduleDefaults?.();
   });
   document.addEventListener('hidden.bs.modal', event => {
     const modal = event.target;
@@ -126,10 +146,18 @@
     });
   });
   let customerDetailsRequest = 0;
+  let customerDetailsMarkup = null;
   const customerViewModal = document.getElementById('customerViewModal');
+  const customerViewTitle = customerViewModal?.querySelector('[data-customer-view-title]');
+  const customerViewCode = customerViewModal?.querySelector('[data-customer-view="code"]');
+  const customerViewBack = customerViewModal?.querySelector('[data-customer-view-back]');
   customerViewModal?.addEventListener('show.bs.modal', async event => {
     const source = event.relatedTarget;
     if (!source?.matches('[data-customer-details-url]')) return;
+    customerDetailsMarkup = null;
+    customerViewTitle.textContent = 'รายละเอียดลูกค้า';
+    customerViewCode.textContent = source.dataset.customerCode || '';
+    customerViewBack.hidden = true;
     const requestId = ++customerDetailsRequest;
     const body = document.getElementById('customerViewModalBody');
     body.innerHTML = '<div class="d-flex justify-content-center align-items-center gap-2 py-5 text-muted"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span>กำลังโหลดข้อมูลลูกค้า...</div>';
@@ -146,6 +174,39 @@
     }
   });
   customerViewModal?.addEventListener('hidden.bs.modal', () => { customerDetailsRequest += 1; });
+  customerViewModal?.addEventListener('click', async event => {
+    if (event.target.closest('[data-customer-view-back]')) {
+      if (customerDetailsMarkup !== null) customerViewModal.querySelector('#customerViewModalBody').innerHTML = customerDetailsMarkup;
+      customerDetailsMarkup = null;
+      customerViewTitle.textContent = 'รายละเอียดลูกค้า';
+      customerViewBack.hidden = true;
+      customerViewCode.hidden = false;
+      initializeSortableTables(customerViewModal);
+      return;
+    }
+
+    const trigger = event.target.closest('[data-customer-job-details]');
+    if (!trigger) return;
+    event.preventDefault();
+    const requestId = ++customerDetailsRequest;
+    const body = customerViewModal.querySelector('#customerViewModalBody');
+    if (customerDetailsMarkup === null) customerDetailsMarkup = body.innerHTML;
+    customerViewTitle.textContent = 'รายละเอียดใบงาน';
+    customerViewCode.hidden = true;
+    customerViewBack.hidden = false;
+    body.innerHTML = '<div class="d-flex justify-content-center align-items-center gap-2 py-5 text-muted"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span>กำลังโหลดรายละเอียดใบงาน...</div>';
+    try {
+      const response = await fetch(trigger.dataset.jobDetailsUrl, { headers: { Accept: 'text/html', 'X-Requested-With': 'XMLHttpRequest' } });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const detailsDocument = new DOMParser().parseFromString(await response.text(), 'text/html');
+      if (requestId !== customerDetailsRequest) return;
+      body.replaceChildren(...Array.from(detailsDocument.body.childNodes, node => document.importNode(node, true)));
+      initializeSortableTables(body);
+    } catch (error) {
+      if (requestId !== customerDetailsRequest) return;
+      body.innerHTML = '<div class="alert alert-danger mb-0">โหลดรายละเอียดใบงานไม่สำเร็จ กรุณาลองอีกครั้ง</div>';
+    }
+  });
   if (window.location.hash === '#cancelModal') {
     const cancellationModal = document.getElementById('cancelModal');
     if (cancellationModal) bootstrap.Modal.getOrCreateInstance(cancellationModal).show();
@@ -174,15 +235,14 @@
   });
   document.addEventListener('click', event => { if (!event.target.closest('.global-search')) results?.classList.remove('show'); });
 
-  const calendarJobModal = document.getElementById('calendarJobModal');
-  let calendarJobDetailsRequest = 0;
-  calendarJobModal?.addEventListener('show.bs.modal', async event => {
+  const jobDetailsModal = document.getElementById('jobDetailsModal');
+  let jobDetailsRequest = 0;
+  jobDetailsModal?.addEventListener('show.bs.modal', async event => {
     const source = event.relatedTarget;
     if (!source?.dataset.jobDetailsUrl) return;
 
-    const requestId = ++calendarJobDetailsRequest;
-    const body = document.getElementById('calendarJobModalBody');
-    document.getElementById('calendarJobDetailLink')?.setAttribute('href', source.dataset.jobUrl || '#');
+    const requestId = ++jobDetailsRequest;
+    const body = document.getElementById('jobDetailsModalBody');
     body.replaceChildren(Object.assign(document.createElement('div'), {
       className: 'd-flex justify-content-center align-items-center gap-2 py-5 text-muted',
       innerHTML: '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span>กำลังโหลดรายละเอียดใบงาน...'
@@ -192,14 +252,141 @@
       const response = await fetch(source.dataset.jobDetailsUrl, { headers: { Accept: 'text/html' } });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const detailsDocument = new DOMParser().parseFromString(await response.text(), 'text/html');
-      if (requestId !== calendarJobDetailsRequest) return;
+      if (requestId !== jobDetailsRequest) return;
       body.replaceChildren(...Array.from(detailsDocument.body.childNodes, node => document.importNode(node, true)));
     } catch (error) {
-      if (requestId !== calendarJobDetailsRequest) return;
+      if (requestId !== jobDetailsRequest) return;
       body.innerHTML = '<div class="alert alert-danger mb-0">โหลดรายละเอียดใบงานไม่สำเร็จ กรุณาลองอีกครั้ง</div>';
     }
   });
-  calendarJobModal?.addEventListener('hidden.bs.modal', () => { calendarJobDetailsRequest += 1; });
+  jobDetailsModal?.addEventListener('hidden.bs.modal', () => { jobDetailsRequest += 1; });
+
+  const refreshCurrentJobMenu = async () => {
+    const isCalendar = window.location.pathname === '/calendar';
+    const requestUrl = new URL(window.location.href);
+    if (!isCalendar) {
+      const filter = document.querySelector('form[data-ajax-search="jobs"]');
+      if (filter) requestUrl.search = new URLSearchParams(new FormData(filter)).toString();
+      requestUrl.searchParams.delete('page');
+    }
+    const response = await fetch(requestUrl, { headers: { Accept: 'text/html', 'X-Requested-With': 'XMLHttpRequest' } });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const pageDocument = new DOMParser().parseFromString(await response.text(), 'text/html');
+    if (isCalendar) {
+      const currentCalendar = document.querySelector('.calendar-grid');
+      const nextCalendar = pageDocument.querySelector('.calendar-grid');
+      if (!currentCalendar || !nextCalendar) throw new Error('ไม่พบปฏิทิน');
+      currentCalendar.replaceWith(nextCalendar);
+      return;
+    }
+    const currentTable = document.querySelector('[data-ajax-table="jobs"]');
+    const nextTable = pageDocument.querySelector('[data-ajax-table="jobs"]');
+    const currentKpis = document.querySelector('.kpi-grid');
+    const nextKpis = pageDocument.querySelector('.kpi-grid');
+    if (!currentTable || !nextTable) throw new Error('ไม่พบรายการใบงาน');
+    currentTable.replaceWith(nextTable);
+    if (currentKpis && nextKpis) currentKpis.replaceWith(nextKpis);
+    initializeSortableTables(nextTable);
+    initializeConfirmForms(nextTable);
+  };
+
+  document.addEventListener('submit', async event => {
+    const form = event.target.closest('form[data-modal-job-assign]');
+    if (!form) return;
+    event.preventDefault();
+    if (form.matches('[data-job-reschedule]')) {
+      const fields = form.elements;
+      const start = `${fields.namedItem('startDate').value}T${fields.namedItem('startTime').value}`;
+      const end = `${fields.namedItem('endDate').value}T${fields.namedItem('endTime').value}`;
+      if (end <= start) {
+        form.querySelector('[data-assign-error]').textContent = 'เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่ม';
+        return;
+      }
+    }
+    const button = form.querySelector('[type="submit"]');
+    if (button.disabled) return;
+    button.disabled = true;
+    const errorBox = form.querySelector('[data-assign-error]');
+    errorBox.textContent = '';
+    let saved = false;
+    try {
+      const response = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || 'มอบหมายงานไม่สำเร็จ');
+      saved = true;
+      const details = await fetch(form.dataset.detailsUrl, { headers: { Accept: 'text/html' } });
+      if (!details.ok) throw new Error('โหลดรายละเอียดล่าสุดไม่สำเร็จ');
+      const html = await details.text();
+      if (!form.isConnected) return;
+      const body = form.closest('.calendar-job-detail-grid').parentElement;
+      body.innerHTML = html;
+      initializeSortableTables(body);
+      if (['/jobs', '/calendar'].includes(location.pathname)) await refreshCurrentJobMenu();
+      Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: result.message, timer: 2500, showConfirmButton: false });
+    } catch (error) {
+      errorBox.textContent = saved ? 'บันทึกการมอบหมายแล้ว แต่โหลดข้อมูลล่าสุดไม่สำเร็จ กรุณาปิดแล้วเปิดรายละเอียดใหม่' : error.message;
+      if (saved && !errorBox.isConnected) Swal.fire({ icon: 'info', title: 'บันทึกการมอบหมายแล้ว', text: 'โหลดรายการล่าสุดไม่สำเร็จ กรุณาค้นหาเพื่อโหลดอีกครั้ง' });
+    } finally { button.disabled = false; }
+  });
+
+  const updateJobServicePrice = form => {
+    const output = form.querySelector('[data-job-service-price]');
+    const service = form.elements.namedItem('serviceId');
+    if (!output || !service) return;
+    const price = service.selectedOptions[0]?.dataset.price;
+    const chargeable = form.elements.namedItem('chargeable');
+    output.textContent = price == null ? '—' : new Intl.NumberFormat('th-TH', {
+      style: 'currency', currency: 'THB'
+    }).format(chargeable && !chargeable.checked ? 0 : Number(price));
+  };
+  document.querySelectorAll('form.job-create-form').forEach(updateJobServicePrice);
+  document.addEventListener('change', event => {
+    const pricingField = event.target.closest('form.job-create-form [name="serviceId"], form.job-create-form [name="chargeable"]');
+    if (pricingField) updateJobServicePrice(pricingField.closest('form'));
+    const customer = event.target.closest('form.job-create-form select[name="customerId"]');
+    if (!customer) return;
+    const form = customer.closest('form');
+    const selected = customer.selectedOptions[0];
+    const address = form.elements.namedItem('address');
+    const phone = form.elements.namedItem('contactPhone');
+    if (selected?.dataset.address && !address.value) address.value = selected.dataset.address;
+    if (selected?.dataset.phone && !phone.value) phone.value = selected.dataset.phone.slice(0, 10);
+    phone.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+
+  document.addEventListener('submit', async event => {
+    const form = event.target.closest('form[data-modal-job-create="true"]');
+    if (!form) return;
+    event.preventDefault();
+    let saved = false;
+    const submitButton = form.querySelector('[type="submit"], button:not([type])');
+    if (submitButton) submitButton.disabled = true;
+    try {
+      const response = await fetch(form.action, {
+        method: form.method || 'post',
+        body: new FormData(form),
+        headers: { Accept: 'text/html', 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      const responseText = await response.text();
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.redirected) {
+        const responseDocument = new DOMParser().parseFromString(responseText, 'text/html');
+        const responseForm = responseDocument.querySelector('form.job-create-form');
+        if (!responseForm) throw new Error('ไม่พบแบบฟอร์มสำหรับแสดงข้อผิดพลาด');
+        const validationMessages = [...new Set([...responseForm.querySelectorAll('.text-danger')].map(message => message.textContent.trim()).filter(Boolean))];
+        Swal.fire({ icon: 'error', title: 'กรุณาตรวจสอบข้อมูลใบงาน', text: validationMessages.join(' · ') || 'โปรดตรวจสอบวันที่ เวลา และข้อมูลที่จำเป็น', confirmButtonColor: '#0878f9' });
+        return;
+      }
+      saved = true;
+      bootstrap.Modal.getInstance(form.closest('.modal'))?.hide();
+      await refreshCurrentJobMenu();
+      Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'สร้างใบงานเรียบร้อยแล้ว', showConfirmButton: false, timer: 2800 });
+    } catch (error) {
+      Swal.fire({ toast: true, position: 'top-end', icon: saved ? 'success' : 'error', title: saved ? 'บันทึกใบงานแล้ว' : 'บันทึกใบงานไม่สำเร็จ', text: saved ? 'โหลดรายการใหม่ไม่สำเร็จ กรุณารีเฟรชหน้านี้' : 'กรุณาลองใหม่อีกครั้ง', showConfirmButton: false, timer: 3000 });
+    } finally {
+      if (submitButton?.isConnected) submitButton.disabled = false;
+    }
+  });
 
   const thaiMonthNames = [
     'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
@@ -211,6 +398,16 @@
     return `${date.getDate()} ${thaiMonthNames[date.getMonth()]} ${date.getFullYear() + 543}`;
   };
   const formatIsoDate = date => `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`;
+  const getDefaultJobSchedule = (now = new Date()) => {
+    const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', hourCycle: 'h23'
+    }).formatToParts(now).map(part => [part.type, part.value]));
+    const start = new Date(Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day), Number(parts.hour) + 1));
+    const end = new Date(start.getTime() + 60 * 60 * 1000);
+    return { startDate: start.toISOString().slice(0, 10), startTime: start.toISOString().slice(11, 16),
+      endDate: end.toISOString().slice(0, 10), endTime: end.toISOString().slice(11, 16) };
+  };
   const parseLocalDate = value => {
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || '');
     if (!match) return null;
@@ -244,6 +441,32 @@
   };
 
   if (window.flatpickr) {
+    document.addEventListener('shown.bs.collapse', event => {
+      const form = event.target.querySelector('form[data-job-reschedule]');
+      if (!form || form.dataset.initialized) return;
+      form.dataset.initialized = 'true';
+      form.querySelectorAll('[data-reschedule-date]').forEach(input => {
+        flatpickr(input, {
+          locale: thaiLocale, dateFormat: 'Y-m-d', altInput: true, altFormat: 'j F Y',
+          disableMobile: true, allowInput: false,
+          onReady: [updateThaiDateDisplay], onOpen: [updateThaiDateDisplay],
+          onChange: [updateThaiDateDisplay],
+          onMonthChange: [(_dates, _text, picker) => updateThaiCalendarYear(picker)],
+          onYearChange: [(_dates, _text, picker) => updateThaiCalendarYear(picker)]
+        });
+      });
+      form.querySelectorAll('[data-reschedule-time]').forEach(select => {
+        const times = new Set(Array.from({ length: 96 }, (_, i) => `${String(Math.floor(i / 4)).padStart(2, '0')}:${String((i % 4) * 15).padStart(2, '0')}`));
+        times.add(select.dataset.initialTime);
+        [...times].sort().forEach(time => select.add(new Option(time, time)));
+        select.value = select.dataset.initialTime;
+      });
+      form.querySelectorAll('select').forEach(select => {
+        select.setAttribute('data-searchable-select', '');
+        select.dataset.searchPlaceholder = select.matches('[data-reschedule-time]') ? 'ค้นหาเวลา เช่น 08:30' : 'ค้นหาหัวหน้าช่าง...';
+      });
+      initializeSearchableSelects(form);
+    });
     const thaiLocale = {
       ...flatpickr.l10ns.th,
       yearAriaLabel: 'ปี',
@@ -366,10 +589,27 @@
       startState.group.addEventListener('datetimechange', validateAppointmentRange);
       endState.group.addEventListener('datetimechange', validateAppointmentRange);
       validateAppointmentRange();
+      jobForm.applyJobScheduleDefaults = () => {
+        const defaults = getDefaultJobSchedule();
+        endState.picker.set('minDate', null);
+        startState.dateValueInput.value = defaults.startDate;
+        endState.dateValueInput.value = defaults.endDate;
+        startState.picker.setDate(defaults.startDate, true, 'Y-m-d');
+        endState.picker.setDate(defaults.endDate, true, 'Y-m-d');
+        startState.timeChoice.value = defaults.startTime;
+        endState.timeChoice.value = defaults.endTime;
+        startState.timeChoice.dispatchEvent(new Event('change', { bubbles: true }));
+        endState.timeChoice.dispatchEvent(new Event('change', { bubbles: true }));
+        startState.timeChoice.rebuildSearchableSelect?.();
+        endState.timeChoice.rebuildSearchableSelect?.();
+        validateAppointmentRange();
+      };
+      if (!jobForm.closest('.modal') && ![startState.dateValueInput, endState.dateValueInput,
+        startState.timeInput, endState.timeInput].some(field => field.value)) jobForm.applyJobScheduleDefaults();
     }
   }
 
-  document.querySelectorAll('select[data-searchable-select]').forEach(select => {
+  const initializeSearchableSelects = root => root.querySelectorAll('select[data-searchable-select]').forEach(select => {
     if (select.dataset.searchableReady === 'true') return;
     select.dataset.searchableReady = 'true';
 
@@ -408,7 +648,7 @@
     search.autocomplete = 'off';
     search.setAttribute('aria-label', search.placeholder);
 
-    const options = Array.from(select.options);
+    let options = Array.from(select.options);
     const list = document.createElement('div');
     list.className = 'searchable-select-options';
     list.setAttribute('role', 'listbox');
@@ -417,7 +657,7 @@
     noResults.textContent = 'ไม่พบตัวเลือกที่ค้นหา';
     noResults.hidden = true;
 
-    const optionButtons = options.map(option => {
+    const buildOptionButtons = () => options.map(option => {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'searchable-select-option';
@@ -428,16 +668,19 @@
       list.appendChild(button);
       return button;
     });
+    let optionButtons = buildOptionButtons();
 
     dropdown.append(search, list, noResults);
     wrapper.append(control, dropdown);
 
     const updateSelection = () => {
+      control.disabled = select.disabled;
       const selected = select.selectedOptions[0] || options[0];
       selectedLabel.textContent = selected?.textContent.trim() || 'เลือกข้อมูล';
       selectedLabel.classList.toggle('is-placeholder', !selected?.value);
       optionButtons.forEach((button, index) => {
         const active = button.dataset.value === select.value;
+        button.textContent = options[index].textContent.trim();
         button.disabled = options[index].disabled || select.disabled;
         button.classList.toggle('is-selected', active);
         button.setAttribute('aria-selected', String(active));
@@ -503,7 +746,7 @@
       }
     });
 
-    optionButtons.forEach(button => {
+    const bindOptionButtons = () => optionButtons.forEach(button => {
       button.addEventListener('click', () => {
         select.value = button.dataset.value;
         select.dispatchEvent(new Event('change', { bubbles: true }));
@@ -528,6 +771,15 @@
         visibleOptions[nextIndex]?.focus();
       });
     });
+    bindOptionButtons();
+    select.rebuildSearchableSelect = () => {
+      options = Array.from(select.options);
+      list.replaceChildren();
+      optionButtons = buildOptionButtons();
+      bindOptionButtons();
+      updateSelection();
+      filterOptions();
+    };
 
     select.addEventListener('change', updateSelection);
     select.addEventListener('invalid', event => {
@@ -537,6 +789,7 @@
     });
     updateSelection();
   });
+  initializeSearchableSelects(document);
 
   document.addEventListener('click', event => {
     if (event.target.closest('.searchable-select')) return;
@@ -665,6 +918,16 @@
     }
   });
 
+  document.addEventListener('click', event => {
+    const card = event.target.closest('[data-job-status-filter]');
+    const form = document.querySelector('form[data-ajax-search="jobs"]');
+    if (!card || !form) return;
+    const table = document.querySelector('[data-ajax-table="jobs"]');
+    if (table?.getAttribute('aria-busy') === 'true') return;
+    form.elements.namedItem('status').value = card.dataset.jobStatusFilter;
+    form.requestSubmit();
+  });
+
   document.addEventListener('submit', async event => {
     const form = event.target.closest('form[data-ajax-search]');
     if (!form) return;
@@ -690,6 +953,15 @@
       if (!nextTable) throw new Error('ไม่พบส่วนตารางในผลลัพธ์');
 
       table.replaceWith(nextTable);
+      if (tableId === 'jobs') {
+        const selectedStatus = pageDocument.querySelector('form[data-ajax-search="jobs"] select[name="status"]').value;
+        document.querySelectorAll('[data-job-status-filter]').forEach(card => {
+          card.setAttribute('aria-pressed', String(card.dataset.jobStatusFilter === selectedStatus));
+          const nextCard = [...pageDocument.querySelectorAll('[data-job-status-filter]')]
+            .find(candidate => candidate.dataset.jobStatusFilter === card.dataset.jobStatusFilter);
+          if (nextCard) card.querySelector('.kpi-value').textContent = nextCard.querySelector('.kpi-value').textContent;
+        });
+      }
       initializeSortableTables(nextTable);
       initializeConfirmForms(nextTable);
     } catch (error) {
@@ -699,13 +971,580 @@
     }
   });
 
+  const dashboardModal = document.getElementById('dashboardDetailsModal');
+  if (dashboardModal) {
+    let cardsController;
+    const refreshCards = async () => {
+      const root = document.querySelector('[data-dashboard-cards]');
+      cardsController?.abort();
+      cardsController = new AbortController();
+      const signal = cardsController.signal;
+      const url = new URL('/dashboard/cards', location.origin);
+      url.searchParams.set('date', root.querySelector('[data-dashboard-date]').value);
+      url.searchParams.set('month', root.querySelector('[data-dashboard-month]').value);
+      root.setAttribute('aria-busy', 'true');
+      try {
+        const response = await fetch(url, { signal, headers: { Accept: 'text/html' } });
+        if (!response.ok) throw new Error('โหลดสรุปไม่สำเร็จ');
+        const page = new DOMParser().parseFromString(await response.text(), 'text/html');
+        const next = page.querySelector('[data-dashboard-cards]');
+        if (!next) throw new Error('ไม่พบข้อมูลสรุป');
+        if (signal.aborted) return;
+        root.querySelector('[data-dashboard-date]')._flatpickr?.destroy();
+        root.replaceWith(next);
+        initializeDashboardFilters();
+      } catch (error) {
+        if (!signal.aborted) {
+          root.removeAttribute('aria-busy');
+          Swal.fire({ icon: 'error', title: 'โหลดสรุปไม่สำเร็จ', text: 'กรุณาลองเลือกช่วงเวลาอีกครั้ง' });
+        }
+      }
+    };
+    const initializeDashboardFilters = () => {
+      const input = document.querySelector('[data-dashboard-date]');
+      if (input && window.flatpickr) flatpickr(input, {
+        locale: flatpickr.l10ns.th, dateFormat: 'Y-m-d', altInput: true, altFormat: 'j F Y',
+        disableMobile: true, allowInput: false,
+        onReady: [updateThaiDateDisplay], onOpen: [updateThaiDateDisplay],
+        onChange: [updateThaiDateDisplay, refreshCards],
+        onMonthChange: [(_dates, _text, picker) => updateThaiCalendarYear(picker)],
+        onYearChange: [(_dates, _text, picker) => updateThaiCalendarYear(picker)]
+      });
+    };
+    initializeDashboardFilters();
+    document.addEventListener('change', event => {
+      if (!event.target.matches('[data-dashboard-month-number], [data-dashboard-year]')) return;
+      const root = document.querySelector('[data-dashboard-cards]');
+      const year = root.querySelector('[data-dashboard-year]');
+      if (!year.reportValidity()) return;
+      root.querySelector('[data-dashboard-month]').value = `${String(Number(year.value) - 543).padStart(4,'0')}-${String(root.querySelector('[data-dashboard-month-number]').value).padStart(2,'0')}`;
+      refreshCards();
+    });
+    document.addEventListener('click', event => {
+      const button = event.target.closest('[data-dashboard-reset]');
+      if (!button) return;
+      const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date()).map(part => [part.type, part.value]));
+      const today = `${parts.year}-${parts.month}-${parts.day}`;
+      if (button.dataset.dashboardReset === 'day') document.querySelector('[data-dashboard-date]')._flatpickr.setDate(today, false);
+      else document.querySelector('[data-dashboard-month]').value = today.slice(0, 7);
+      refreshCards();
+    });
+    const body = dashboardModal.querySelector('[data-dashboard-details-body]');
+    let controller;
+    const loadDetails = async (page = 0) => {
+      controller?.abort();
+      controller = new AbortController();
+      const signal = controller.signal;
+      body.innerHTML = '<div class="text-center text-muted py-5"><span class="spinner-border spinner-border-sm me-2"></span>กำลังโหลดรายการ...</div>';
+      const url = new URL('/dashboard/details', location.origin);
+      url.searchParams.set('kind', dashboardModal.dataset.kind);
+      url.searchParams.set('scope', dashboardModal.dataset.scope);
+      if (dashboardModal.dataset.date) url.searchParams.set('date', dashboardModal.dataset.date);
+      if (dashboardModal.dataset.month) url.searchParams.set('month', dashboardModal.dataset.month);
+      url.searchParams.set('page', page);
+      try {
+        const response = await fetch(url, { signal, headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!response.ok) throw new Error('โหลดรายการไม่สำเร็จ');
+        const html = await response.text();
+        if (signal.aborted) return;
+        body.innerHTML = html;
+        initializeSortableTables(body);
+      } catch (error) {
+        if (!signal.aborted) body.innerHTML = '<div class="text-danger text-center py-4">โหลดรายการไม่สำเร็จ กรุณาปิดแล้วลองใหม่</div>';
+      }
+    };
+    dashboardModal.addEventListener('show.bs.modal', event => {
+      dashboardModal.dataset.kind = event.relatedTarget.dataset.dashboardKind;
+      dashboardModal.dataset.scope = event.relatedTarget.dataset.dashboardScope;
+      dashboardModal.dataset.date = event.relatedTarget.dataset.dashboardSelectedDate || '';
+      dashboardModal.dataset.month = event.relatedTarget.dataset.dashboardSelectedMonth || '';
+      dashboardModal.querySelector('.modal-title').textContent = event.relatedTarget.querySelector('.kpi-label').textContent;
+      loadDetails();
+    });
+    dashboardModal.addEventListener('click', event => {
+      const button = event.target.closest('[data-dashboard-page]');
+      if (button && !button.disabled) loadDetails(button.dataset.dashboardPage);
+    });
+    dashboardModal.addEventListener('hidden.bs.modal', () => { controller?.abort(); body.replaceChildren(); });
+  }
+
+  const paymentEntryModal = document.getElementById('recordPaymentModal');
+  if (paymentEntryModal) {
+    const form = paymentEntryModal.querySelector('[data-payment-entry]');
+    const jobInput = form.elements.namedItem('jobId');
+    const modalTitle = paymentEntryModal.querySelector('#recordPaymentModalTitle');
+    const amount = form.elements.namedItem('amount');
+    const type = form.elements.namedItem('paymentType');
+    const submitButton = form.querySelector('[data-payment-submit]');
+    const errorBox = form.querySelector('[data-payment-error]');
+    const remainingLabel = form.querySelector('[data-payment-remaining]');
+    const amountHint = form.querySelector('[data-payment-amount-hint]');
+    const slipInput = form.querySelector('[data-payment-slip]');
+    const slipStatus = form.querySelector('[data-slip-status]');
+    const slipCancel = form.querySelector('[data-slip-cancel]');
+    const slipPicker = form.querySelector('[data-slip-picker]');
+    const slipDropzone = form.querySelector('[data-slip-dropzone]');
+    const slipPreview = form.querySelector('[data-slip-preview]');
+    const slipEmpty = form.querySelector('[data-slip-empty]');
+    const slipRemove = form.querySelector('[data-slip-remove]');
+    const slipExpand = form.querySelector('[data-slip-expand]');
+    const slipResult = form.querySelector('[data-slip-result]');
+    const slipResultTitle = form.querySelector('[data-slip-result-title]');
+    const slipReread = form.querySelector('[data-slip-reread]');
+    const slipZoom = form.querySelector('[data-slip-zoom]');
+    const slipZoomImage = form.querySelector('[data-slip-zoom-image]');
+    const money = new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' });
+    let jobsRequest = 0;
+    let submitting = false;
+    let slipReading = false;
+    let slipRequest = 0;
+    let slipController;
+    let slipAmountError = '';
+    let previewFile = null;
+    let previewUrl = null;
+    const syncPaymentControls = () => {
+      const remaining = jobInput.dataset.remaining;
+      submitButton.disabled = submitting || slipReading || !remaining;
+      slipInput.disabled = submitting || slipReading || !remaining || !type.value;
+      slipPicker.classList.toggle('disabled', slipInput.disabled);
+      slipPicker.setAttribute('aria-disabled', String(slipInput.disabled));
+      slipDropzone.setAttribute('aria-disabled', String(slipInput.disabled));
+      slipReread.disabled = slipInput.disabled || !previewFile;
+      slipRemove.disabled = submitting || !previewFile;
+      slipCancel.hidden = !slipReading;
+    };
+    const cancelSlip = () => {
+      slipRequest += 1;
+      slipController?.abort();
+      slipController = null;
+      slipReading = false;
+      slipInput.value = '';
+      slipStatus.hidden = true;
+      syncPaymentControls();
+    };
+    const clearSlipPreview = () => {
+      cancelSlip();
+      previewFile = null;
+      slipPreview.removeAttribute('src');
+      slipZoomImage.removeAttribute('src');
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      previewUrl = null;
+      slipPreview.hidden = true;
+      slipZoom.hidden = true;
+      slipExpand.hidden = true;
+      slipEmpty.hidden = false;
+      slipResult.hidden = true;
+      slipDropzone.classList.remove('is-dragging');
+      form.querySelectorAll('[data-slip-value]').forEach(field => { field.textContent = '—'; });
+      slipAmountError = '';
+      syncPaymentControls();
+    };
+    const updateBalance = () => {
+      slipAmountError = '';
+      const remaining = jobInput.dataset.remaining;
+      remainingLabel.textContent = remaining ? money.format(Number(remaining)) : 'ไม่สามารถรับชำระใบงานนี้ได้';
+      if (remaining) amount.max = remaining;
+      else amount.removeAttribute('max');
+      const manualAmount = ['DEPOSIT', 'OTHER'].includes(type.value);
+      amount.readOnly = !manualAmount || !remaining;
+      amount.value = remaining && ['FULL', 'BALANCE'].includes(type.value) ? remaining : '';
+      amountHint.textContent = manualAmount ? 'กรอกจำนวนเงินได้ไม่เกินยอดคงเหลือ' :
+        type.value ? 'ระบบกำหนดยอดคงเหลือให้อัตโนมัติ ไม่สามารถแก้ไขจำนวนเงินได้' : 'กรุณาเลือกประเภทการชำระก่อน';
+      syncPaymentControls();
+    };
+    type.addEventListener('change', () => { cancelSlip(); updateBalance(); });
+    amount.addEventListener('input', () => {
+      slipAmountError = '';
+      if (amount.max && amount.value !== '' && Number(amount.value) > Number(amount.max)) {
+        amount.value = amount.max;
+        amountHint.textContent = `กรอกได้สูงสุด ${money.format(Number(amount.max))} เท่านั้น`;
+      }
+    });
+    slipCancel.addEventListener('click', cancelSlip);
+    slipRemove.addEventListener('click', clearSlipPreview);
+    slipExpand.addEventListener('click', () => {
+      if (!previewUrl) return;
+      slipZoom.hidden = false;
+      slipZoom.querySelector('[data-slip-zoom-close]').focus();
+    });
+    slipZoom.querySelector('[data-slip-zoom-close]').addEventListener('click', () => {
+      slipZoom.hidden = true;
+      slipExpand.focus();
+    });
+    slipZoom.addEventListener('keydown', event => {
+      if (event.key === 'Tab') {
+        event.preventDefault();
+        slipZoom.querySelector('[data-slip-zoom-close]').focus();
+      }
+    });
+    const note = form.elements.namedItem('note');
+    note.addEventListener('input', () => { form.querySelector('[data-payment-note-count]').textContent = `${note.value.length}/500`; });
+    // Manual edits cancel an in-flight read so OCR cannot overwrite newer input.
+    ['input', 'change', 'datetimechange'].forEach(name => form.addEventListener(name, event => {
+      if (slipReading && event.target !== slipInput) cancelSlip();
+    }));
+    const readSlip = async () => {
+      let file = previewFile;
+      if (!file || slipInput.disabled) return;
+      cancelSlip();
+      slipResult.hidden = true;
+      slipAmountError = '';
+      errorBox.hidden = true;
+      if (!amount.readOnly) amount.value = '';
+      const requestId = slipRequest;
+      slipController = new AbortController();
+      const controller = slipController;
+      slipReading = true;
+      syncPaymentControls();
+      slipStatus.hidden = false;
+      slipStatus.className = 'mt-2 small text-muted';
+      slipStatus.textContent = 'กำลังเตรียมอ่านสลิปในเครื่อง...';
+      const timeout = setTimeout(() => controller.abort(), 120000);
+      try {
+        const result = await PaymentSlip.read(file, {
+          signal: controller.signal,
+          onProgress: progress => {
+            if (requestId === slipRequest) slipStatus.textContent = progress === null
+              ? 'กำลังเตรียมเครื่องมืออ่านสลิป...' : `กำลังอ่านสลิป ${progress}%`;
+          }
+        });
+        if (requestId !== slipRequest) return;
+        slipReading = false;
+        const values = { date: result.date ? result.date.split('-').reverse().join('/') : null,
+          time: result.time, amount: result.amount ? `${Number(result.amount).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท` : null };
+        form.querySelectorAll('[data-slip-value]').forEach(field => { field.textContent = values[field.dataset.slipValue] || '—'; });
+        const filled = [];
+        const warnings = [];
+        if (result.date) {
+          form.querySelector('[data-thai-date]')._flatpickr.setDate(result.date, true, 'Y-m-d');
+          form.elements.namedItem('paymentDay').value = result.date;
+          filled.push('วันที่');
+        } else warnings.push('อ่านวันที่ไม่ชัดเจน');
+        if (result.time) {
+          const time = form.elements.namedItem('paymentTime');
+          if (![...time.options].some(option => option.value === result.time)) {
+            const option = new Option(result.time, result.time);
+            option.dataset.slipTime = 'true';
+            time.add(option);
+          }
+          time.value = result.time;
+          time.rebuildSearchableSelect?.();
+          time.dispatchEvent(new Event('change', { bubbles: true }));
+          filled.push('เวลา');
+        } else warnings.push('อ่านเวลาไม่ชัดเจน');
+        if (result.amount) {
+          const remaining = Number(amount.max);
+          if (Number(result.amount) > remaining) {
+            slipAmountError = `ยอดในสลิป ${money.format(Number(result.amount))} เกินยอดคงเหลือ ไม่ได้นำยอดมาใส่ กรุณาตรวจสอบ`;
+            warnings.push(slipAmountError);
+          } else if (amount.readOnly && Number(result.amount) !== remaining) {
+            slipAmountError = `ยอดในสลิป ${money.format(Number(result.amount))} ไม่ตรงกับยอดที่ต้องชำระ กรุณาเลือกประเภทมัดจำหรืออื่น ๆ หากชำระบางส่วน`;
+            warnings.push(slipAmountError);
+          } else {
+            amount.value = result.amount;
+            filled.push(`ยอดเงิน ${money.format(Number(result.amount))}`);
+          }
+        } else warnings.push('อ่านยอดเงินไม่ชัดเจน');
+        if (!form.elements.namedItem('paymentMethod').value) form.elements.namedItem('paymentMethod').value = 'TRANSFER';
+        slipStatus.className = `mt-2 small ${warnings.length ? 'text-warning-emphasis' : 'text-success'}`;
+        slipStatus.textContent = [filled.length ? `เติม ${filled.join(', ')} แล้ว` : 'ไม่พบข้อมูลที่อ่านได้แน่ชัด',
+          ...warnings, 'โปรดตรวจสอบข้อมูลก่อนบันทึก'].join(' · ');
+        slipResult.hidden = false;
+        slipResult.classList.toggle('is-warning', warnings.length > 0);
+        slipResultTitle.textContent = warnings.length ? 'อ่านข้อมูลได้บางส่วน / กรุณาตรวจสอบ' : '✓ อ่านข้อมูลจากสลิปสำเร็จ';
+      } catch (error) {
+        if (requestId !== slipRequest) return;
+        slipStatus.className = 'mt-2 small text-danger';
+        slipStatus.textContent = error.name === 'AbortError'
+          ? 'อ่านสลิปนานเกินไป กรุณาลองใหม่หรือกรอกข้อมูลเอง'
+          : `${error.message || 'อ่านสลิปไม่สำเร็จ'} สามารถกรอกข้อมูลเองได้ ภาพไม่ถูกเก็บไว้`;
+      } finally {
+        clearTimeout(timeout);
+        file = null;
+        if (requestId === slipRequest) {
+          slipReading = false;
+          slipController = null;
+          syncPaymentControls();
+        }
+      }
+    };
+    const selectSlip = file => {
+      if (!file || slipInput.disabled) return;
+      try { PaymentSlip.validateImage(file); }
+      catch (error) {
+        slipStatus.hidden = false;
+        slipStatus.className = 'mt-2 small text-danger';
+        slipStatus.textContent = error.message;
+        return;
+      }
+      clearSlipPreview();
+      previewFile = file;
+      previewUrl = URL.createObjectURL(file);
+      slipPreview.src = previewUrl;
+      slipZoomImage.src = previewUrl;
+      slipPreview.hidden = false;
+      slipEmpty.hidden = true;
+      slipExpand.hidden = false;
+      syncPaymentControls();
+      readSlip();
+    };
+    slipInput.addEventListener('change', () => {
+      const file = slipInput.files[0];
+      slipInput.value = ''; // Unnamed input: images never enter payment FormData.
+      selectSlip(file);
+    });
+    slipReread.addEventListener('click', readSlip);
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(name => slipDropzone.addEventListener(name, event => {
+      event.preventDefault();
+      event.stopPropagation();
+      slipDropzone.classList.toggle('is-dragging', !slipInput.disabled && ['dragenter', 'dragover'].includes(name));
+      if (name === 'drop' && !slipInput.disabled) {
+        if (event.dataTransfer.files.length !== 1) {
+          slipStatus.hidden = false;
+          slipStatus.className = 'mt-2 small text-danger';
+          slipStatus.textContent = 'กรุณาเลือกภาพสลิปครั้งละ 1 ภาพ';
+          return;
+        }
+        selectSlip(event.dataTransfer.files[0]);
+      }
+    }));
+    // Prevent dropping an image outside the target from navigating away from this menu.
+    ['dragover', 'drop'].forEach(name => document.addEventListener(name, event => {
+      if (paymentEntryModal.classList.contains('show')) event.preventDefault();
+    }));
+
+    document.addEventListener('show.bs.modal', async event => {
+      if (event.target !== paymentEntryModal) return;
+      clearSlipPreview();
+      form.elements.namedItem('paymentTime').querySelectorAll('[data-slip-time]').forEach(option => option.remove());
+      form.elements.namedItem('paymentTime').rebuildSearchableSelect?.();
+      const requestId = ++jobsRequest;
+      errorBox.hidden = true;
+      form.querySelector('[data-thai-date]')._flatpickr?.clear();
+      amount.removeAttribute('max');
+      amount.readOnly = true;
+      amountHint.textContent = 'กรุณาเลือกประเภทการชำระก่อน';
+      const selectedJob = event.relatedTarget?.dataset.paymentJobId;
+      const selectedJobNo = event.relatedTarget?.dataset.paymentJobNo;
+      jobInput.value = '';
+      delete jobInput.dataset.remaining;
+      modalTitle.textContent = selectedJobNo ? `บันทึกการชำระเงิน · ${selectedJobNo}` : 'บันทึกการชำระเงิน';
+      submitButton.disabled = true;
+      remainingLabel.textContent = 'กำลังโหลด...';
+      syncPaymentControls();
+      if (!selectedJob) {
+        remainingLabel.textContent = 'ไม่พบใบงาน';
+        errorBox.textContent = 'กรุณากดชำระเงินจากรายการใบงานที่ต้องการ';
+        errorBox.hidden = false;
+        return;
+      }
+      try {
+        const response = await fetch('/payments/payable-jobs', { headers: { Accept: 'application/json' } });
+        if (!response.ok) throw new Error('โหลดใบงานไม่สำเร็จ กรุณาลองอีกครั้ง');
+        const jobs = await response.json();
+        if (requestId !== jobsRequest) return;
+        const job = jobs.find(item => String(item.id) === selectedJob);
+        if (job && Number(job.remaining) > 0) {
+          jobInput.value = String(job.id);
+          jobInput.dataset.remaining = job.remaining;
+          modalTitle.textContent = `บันทึกการชำระเงิน · ${job.jobNo}`;
+        } else {
+          errorBox.textContent = 'ใบงานนี้ไม่มียอดคงเหลือ หรือไม่สามารถรับชำระได้แล้ว';
+          errorBox.hidden = false;
+        }
+        updateBalance();
+      } catch (error) {
+        if (requestId !== jobsRequest) return;
+        remainingLabel.textContent = 'โหลดไม่สำเร็จ';
+        errorBox.textContent = 'โหลดใบงานไม่สำเร็จ กรุณาปิดแล้วลองอีกครั้ง';
+        errorBox.hidden = false;
+      }
+    });
+    paymentEntryModal.addEventListener('hide.bs.modal', clearSlipPreview);
+    paymentEntryModal.addEventListener('hidden.bs.modal', () => { jobsRequest += 1; });
+
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      if (slipAmountError) {
+        errorBox.textContent = slipAmountError;
+        errorBox.hidden = false;
+        return;
+      }
+      if (submitting || slipReading || !jobInput.value || !jobInput.dataset.remaining || !form.reportValidity()) return;
+      submitting = true;
+      syncPaymentControls();
+      submitButton.disabled = true;
+      submitButton.textContent = 'กำลังบันทึก...';
+      errorBox.hidden = true;
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST', body: new FormData(form),
+          headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        if (!response.headers.get('Content-Type')?.includes('application/json')) throw new Error('ไม่สามารถบันทึกได้ กรุณาเข้าสู่ระบบใหม่แล้วลองอีกครั้ง');
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || 'บันทึกการชำระเงินไม่สำเร็จ');
+        bootstrap.Modal.getOrCreateInstance(paymentEntryModal).hide();
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: result.message, showConfirmButton: false, timer: 3000 });
+        try {
+          const filter = document.querySelector('form[data-ajax-search="payments"]');
+          const url = new URL('/payments', location.origin);
+          url.search = new URLSearchParams(new FormData(filter)).toString();
+          const tableResponse = await fetch(url, { headers: { Accept: 'text/html', 'X-Requested-With': 'XMLHttpRequest' } });
+          if (!tableResponse.ok) throw new Error('โหลดตารางไม่สำเร็จ');
+          const page = new DOMParser().parseFromString(await tableResponse.text(), 'text/html');
+          const nextTable = page.querySelector('[data-ajax-table="payments"]');
+          if (!nextTable) throw new Error('ไม่พบตาราง');
+          document.querySelector('[data-ajax-table="payments"]').replaceWith(nextTable);
+          initializeSortableTables(nextTable);
+        } catch (error) {
+          Swal.fire({ icon: 'info', title: 'บันทึกการชำระแล้ว', text: 'โหลดตารางล่าสุดไม่สำเร็จ กรุณากดค้นหาเพื่อโหลดรายการอีกครั้ง' });
+        }
+      } catch (error) {
+        errorBox.textContent = error.message;
+        errorBox.hidden = false;
+      } finally {
+        submitting = false;
+        syncPaymentControls();
+        submitButton.textContent = 'บันทึกการชำระ';
+      }
+    });
+  }
+
+  if (!document.body.classList.contains('receipt-page')) {
+    const receiptModal = document.createElement('div');
+    receiptModal.className = 'modal fade';
+    receiptModal.id = 'receiptPreviewModal';
+    receiptModal.tabIndex = -1;
+    receiptModal.setAttribute('aria-labelledby', 'receiptPreviewModalTitle');
+    receiptModal.setAttribute('aria-hidden', 'true');
+    receiptModal.innerHTML = `
+      <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-lg-down">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title fs-5" id="receiptPreviewModalTitle">ใบเสร็จรับเงิน / ใบคืนเงิน</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="ปิด"></button>
+          </div>
+          <div class="modal-body p-0">
+            <div class="text-center text-muted p-4" data-receipt-message role="status">กำลังโหลดเอกสาร...</div>
+            <iframe title="ใบเสร็จรับเงิน / ใบคืนเงิน" class="w-100 border-0" style="height:70vh" hidden></iframe>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-receipt-print disabled><i class="bi bi-printer me-2"></i>พิมพ์ / บันทึกเป็นไฟล์ PDF</button>
+            <button type="button" class="btn btn-outline-primary" data-receipt-download disabled><i class="bi bi-image me-2"></i>ดาวน์โหลดรูปภาพ PNG</button>
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ปิด</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(receiptModal);
+    const preview = bootstrap.Modal.getOrCreateInstance(receiptModal);
+    const frame = receiptModal.querySelector('iframe');
+    const message = receiptModal.querySelector('[data-receipt-message]');
+    const printButton = receiptModal.querySelector('[data-receipt-print]');
+    const downloadButton = receiptModal.querySelector('[data-receipt-download]');
+    let previousModal = null;
+    let receiptOpening = false;
+    let receiptLoadRequest = 0;
+
+    document.addEventListener('click', async event => {
+      const link = event.target.closest('a[data-receipt-preview]');
+      if (!link) return;
+      event.preventDefault();
+      if (receiptOpening) return;
+      receiptOpening = true;
+      const requestId = ++receiptLoadRequest;
+      const url = new URL(link.href);
+      url.searchParams.set('embedded', 'true');
+      message.hidden = false;
+      message.textContent = 'กำลังโหลดเอกสาร...';
+      frame.hidden = true;
+      printButton.disabled = true;
+      downloadButton.disabled = true;
+      previousModal = link.closest('.modal.show');
+      if (previousModal) {
+        previousModal.addEventListener('hidden.bs.modal', () => preview.show(), { once: true });
+        bootstrap.Modal.getOrCreateInstance(previousModal).hide();
+      } else {
+        preview.show();
+      }
+      try {
+        const response = await fetch(url, { headers: { Accept: 'text/html', 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const markup = await response.text();
+        if (requestId !== receiptLoadRequest) return;
+        const receiptDocument = new DOMParser().parseFromString(markup, 'text/html');
+        if (!receiptDocument.getElementById('receipt')) throw new Error('ไม่พบเอกสาร');
+        frame.srcdoc = markup;
+      } catch (error) {
+        if (requestId !== receiptLoadRequest) return;
+        message.textContent = 'โหลดเอกสารไม่สำเร็จ กรุณาปิดแล้วลองอีกครั้ง';
+      }
+    });
+
+    frame.addEventListener('load', () => {
+      if (!receiptOpening || frame.contentWindow.location.href === 'about:blank') return;
+      if (!frame.contentDocument.getElementById('receipt')) {
+        message.textContent = 'โหลดเอกสารไม่สำเร็จ กรุณาปิดแล้วลองอีกครั้ง';
+        return;
+      }
+      message.hidden = true;
+      frame.hidden = false;
+      printButton.disabled = false;
+      downloadButton.disabled = false;
+      frame.contentDocument.addEventListener('keydown', event => {
+        if (event.key !== 'Escape') return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        preview.hide();
+      }, true);
+    });
+    printButton.addEventListener('click', () => frame.contentWindow.print());
+    downloadButton.addEventListener('click', () => frame.contentWindow.downloadReceiptPng());
+    receiptModal.addEventListener('hidden.bs.modal', () => {
+      receiptOpening = false;
+      receiptLoadRequest += 1;
+      frame.removeAttribute('srcdoc');
+      frame.src = 'about:blank';
+      if (previousModal?.isConnected) bootstrap.Modal.getOrCreateInstance(previousModal).show();
+      previousModal = null;
+    });
+  }
+
   window.downloadReceiptPng = () => {
     const receipt = document.getElementById('receipt');
     if (!receipt) return;
-    const scale = 2, width = 794, height = Math.max(receipt.scrollHeight, 900);
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml" style="background:white;width:${width}px;min-height:${height}px">${receipt.outerHTML}</div></foreignObject></svg>`;
-    const image = new Image(); const canvas = document.createElement('canvas'); canvas.width = width * scale; canvas.height = height * scale;
-    image.onload = () => { const ctx = canvas.getContext('2d'); ctx.scale(scale, scale); ctx.fillStyle = '#fff'; ctx.fillRect(0,0,width,height); ctx.drawImage(image,0,0); URL.revokeObjectURL(image.src); const link=document.createElement('a');link.download='receipt.png';link.href=canvas.toDataURL('image/png');link.click(); };
-    image.src = URL.createObjectURL(new Blob([svg], {type:'image/svg+xml;charset=utf-8'}));
+    const scale = 2, width = receipt.offsetWidth, height = receipt.scrollHeight;
+    const copy = receipt.cloneNode(true);
+    const originals = [receipt, ...receipt.querySelectorAll('*')];
+    const copies = [copy, ...copy.querySelectorAll('*')];
+    originals.forEach((element, index) => {
+      const style = getComputedStyle(element);
+      for (const property of style) copies[index].style.setProperty(property, style.getPropertyValue(property));
+    });
+    Object.assign(copy.style, { margin: '0', boxShadow: 'none', width: `${width}px` });
+    const markup = new XMLSerializer().serializeToString(copy);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><foreignObject width="100%" height="100%">${markup}</foreignObject></svg>`;
+    const image = new Image();
+    const fail = () => Swal.fire({ icon: 'error', title: 'ดาวน์โหลดภาพไม่สำเร็จ', text: 'กรุณาลองอีกครั้ง หรือบันทึกเป็นไฟล์ PDF' });
+    image.onerror = fail;
+    image.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = width * scale;
+        canvas.height = height * scale;
+        const context = canvas.getContext('2d');
+        context.scale(scale, scale);
+        context.fillStyle = '#fff';
+        context.fillRect(0, 0, width, height);
+        context.drawImage(image, 0, 0);
+        const link = document.createElement('a');
+        link.download = 'receipt.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } catch (error) {
+        fail();
+      }
+    };
+    image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
   };
 })();

@@ -16,6 +16,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import org.springframework.http.ResponseEntity;
 
 @Controller
 @RequestMapping("/jobs")
@@ -44,6 +47,13 @@ public class JobController {
     public String list(@RequestParam(defaultValue = "") String q, @RequestParam(required = false) JobStatus status,
                        @RequestParam(defaultValue = "0") int page, Model model) {
         model.addAttribute("jobs", jobs.search(q, status, PageRequest.of(page, 10)));
+        var statusCounts = new LinkedHashMap<String, Long>();
+        for (JobStatus jobStatus : JobStatus.values()) statusCounts.put(jobStatus.name(), 0L);
+        for (JobRepository.StatusCount count : jobs.countByJobStatus()) {
+            statusCounts.put(count.getJobStatus().name(), count.getTotal());
+        }
+        model.addAttribute("jobStatusCounts", statusCounts);
+        model.addAttribute("totalJobs", statusCounts.values().stream().mapToLong(Long::longValue).sum());
         model.addAttribute("q", q); model.addAttribute("selectedStatus", status); model.addAttribute("statuses", JobStatus.values());
         prepareForm(model, new JobForm());
         model.addAttribute("modalMode", true);
@@ -59,9 +69,16 @@ public class JobController {
 
     @PostMapping
     public String create(@Valid @ModelAttribute("jobForm") JobForm form, BindingResult binding, Model model, RedirectAttributes redirect) {
+        model.addAttribute("modalMode", false);
         if (binding.hasErrors()) { prepareForm(model, form); return "job/form"; }
-        Job job = jobService.create(form); redirect.addFlashAttribute("successMessage", "สร้างใบงานเรียบร้อยแล้ว");
-        return "redirect:/jobs/" + job.getId();
+        try {
+            Job job = jobService.create(form); redirect.addFlashAttribute("successMessage", "สร้างใบงานเรียบร้อยแล้ว");
+            return "redirect:/jobs/" + job.getId();
+        } catch (BusinessException ex) {
+            binding.reject("job.create", ex.getMessage());
+            prepareForm(model, form);
+            return "job/form";
+        }
     }
 
     @GetMapping("/{id}")
@@ -80,6 +97,33 @@ public class JobController {
     @PostMapping("/{id}/assign")
     public String assign(@PathVariable Long id, @RequestParam Long technicianId, RedirectAttributes redirect) {
         jobService.assign(id, technicianId); success(redirect, "มอบหมายหัวหน้าช่างเรียบร้อยแล้ว"); return "redirect:/jobs/" + id;
+    }
+
+    @PostMapping("/{id}/assign/modal")
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> assignModal(@PathVariable Long id, @RequestParam Long technicianId) {
+        try {
+            jobService.assign(id, technicianId);
+            return ResponseEntity.ok(Map.of("message", "มอบหมายหัวหน้าช่างเรียบร้อยแล้ว"));
+        } catch (BusinessException ex) {
+            return ResponseEntity.status(409).body(Map.of("message", ex.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/reschedule/modal")
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> reschedule(@PathVariable Long id,
+            @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate startDate,
+            @RequestParam @org.springframework.format.annotation.DateTimeFormat(pattern = "HH:mm") java.time.LocalTime startTime,
+            @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate endDate,
+            @RequestParam @org.springframework.format.annotation.DateTimeFormat(pattern = "HH:mm") java.time.LocalTime endTime,
+            @RequestParam Long technicianId, @RequestParam String reason) {
+        try {
+            jobService.reschedule(id, startDate.atTime(startTime), endDate.atTime(endTime), technicianId, reason);
+            return ResponseEntity.ok(Map.of("message", "เลื่อนนัดและมอบหมายหัวหน้าช่างเรียบร้อยแล้ว"));
+        } catch (BusinessException ex) {
+            return ResponseEntity.status(409).body(Map.of("message", ex.getMessage()));
+        }
     }
 
     @PostMapping("/{id}/status")

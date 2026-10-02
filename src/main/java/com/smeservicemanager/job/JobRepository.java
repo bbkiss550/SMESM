@@ -11,11 +11,42 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface JobRepository extends JpaRepository<Job, Long> {
+    interface StatusCount {
+        JobStatus getJobStatus();
+        Long getTotal();
+    }
+
+    @Query("select j.jobStatus as jobStatus, count(j) as total from Job j group by j.jobStatus")
+    List<StatusCount> countByJobStatus();
+
+    interface ReceivableJob {
+        Long getId();
+        String getJobNo();
+        String getCustomerName();
+        BigDecimal getRemaining();
+    }
+
+    @Query("""
+            select j.id as id, j.jobNo as jobNo,
+                   coalesce(nullif(j.customer.companyName, ''), j.customer.name) as customerName,
+                   j.grandTotal
+                     - (select coalesce(sum(p.amount), 0) from Payment p where p.job.id = j.id and p.recordStatus = 'ACTIVE' and p.status = 'A')
+                     + (select coalesce(sum(r.amount), 0) from Refund r where r.job.id = j.id and r.status = 'A') as remaining
+            from Job j
+            where j.status = 'A' and j.jobStatus <> 'CANCELLED'
+              and j.grandTotal
+                    - (select coalesce(sum(p.amount), 0) from Payment p where p.job.id = j.id and p.recordStatus = 'ACTIVE' and p.status = 'A')
+                    + (select coalesce(sum(r.amount), 0) from Refund r where r.job.id = j.id and r.status = 'A') > 0
+            order by j.createDate desc
+            """)
+    List<ReceivableJob> findReceivableJobs();
+
     @EntityGraph(attributePaths = {"customer", "service", "technician", "technician.role"})
     @Query("select j from Job j where (:q = '' or lower(j.jobNo) like lower(concat('%', :q, '%')) or lower(j.title) like lower(concat('%', :q, '%')) or lower(j.customer.name) like lower(concat('%', :q, '%')) or lower(coalesce(j.customer.companyName, '')) like lower(concat('%', :q, '%')) or j.contactPhone like concat('%', :q, '%')) and (:status is null or j.jobStatus = :status) order by j.appointmentStart desc")
     Page<Job> search(@Param("q") String query, @Param("status") JobStatus status, Pageable pageable);

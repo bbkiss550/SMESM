@@ -24,7 +24,7 @@ public class SecurityConfig {
                         .requestMatchers("/", "/login", "/track/**", "/assets/**", "/error", "/actuator/health").permitAll()
                         .requestMatchers("/users/**", "/settings/**", "/reports/**").hasRole("ADMIN")
                         .requestMatchers("/my-jobs/**").hasRole("TECHNICIAN")
-                        .requestMatchers("/dashboard", "/jobs/**", "/calendar/**", "/customers/**", "/services/**", "/products/**", "/stock/**", "/payments/**").hasAnyRole("ADMIN", "STAFF")
+                        .requestMatchers("/dashboard", "/dashboard/**", "/jobs/**", "/calendar/**", "/customers/**", "/services/**", "/products/**", "/stock/**", "/payments/**").hasAnyRole("ADMIN", "STAFF")
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/login")

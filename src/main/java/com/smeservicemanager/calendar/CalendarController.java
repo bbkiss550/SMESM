@@ -80,6 +80,7 @@ public class CalendarController {
     @GetMapping("/calendar/jobs/{id}/details")
     public String jobDetails(@PathVariable Long id, Model model) {
         model.addAttribute("job", jobService.requireDetailed(id));
+        model.addAttribute("technicians", users.findActiveTechnicians());
         model.addAttribute("payments", payments.findByJobIdAndRecordStatusOrderByPaymentDateDesc(id, "ACTIVE"));
         model.addAttribute("refunds", refunds.findByJobIdOrderByRefundDateDesc(id));
         model.addAttribute("paid", paymentService.totalPaid(id));

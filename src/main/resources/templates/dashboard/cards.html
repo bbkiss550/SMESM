@@ -1,0 +1,29 @@
+<div th:fragment="content" data-dashboard-cards xmlns:th="http://www.thymeleaf.org">
+  <section class="card dashboard-summary-section mb-3" th:each="scope : ${ {'day','month','current'} }">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+      <div>
+        <h2 class="section-title" th:text="${scope == 'day' ? 'ภาพรวมรายวัน' : (scope == 'month' ? 'ภาพรวมรายเดือน' : 'สถานะงานปัจจุบัน')}"></h2>
+        <small class="text-muted" th:if="${scope == 'current'}">งานคงค้างทั้งหมด ไม่ขึ้นกับวันที่หรือเดือนที่เลือก</small>
+      </div>
+      <div class="d-flex gap-2" th:if="${scope != 'current'}">
+        <input th:if="${scope == 'day'}" class="form-control" type="text" data-dashboard-date th:value="${selectedDate}" aria-label="เลือกวันที่สรุป" />
+        <div th:if="${scope == 'month'}" class="d-flex gap-2">
+          <input type="hidden" data-dashboard-month th:value="${selectedMonth}" />
+          <select class="form-select" data-dashboard-month-number aria-label="เลือกเดือนสรุป"><option th:each="name,stat : ${monthNames}" th:value="${stat.count}" th:text="${name}" th:selected="${stat.count == selectedMonth.monthValue}"></option></select>
+          <input class="form-control" style="width:100px" type="number" min="2443" max="10542" data-dashboard-year th:value="${selectedMonth.year + 543}" aria-label="ปี พ.ศ." />
+        </div>
+        <button type="button" class="btn btn-primary text-nowrap" th:attr="data-dashboard-reset=${scope}" th:text="${scope == 'day' ? 'วันนี้' : 'เดือนนี้'}"></button>
+      </div>
+    </div>
+    <div class="dashboard-metric-grid" th:classappend="${scope == 'day' ? 'dashboard-metric-grid-day' : ''}">
+      <button type="button" class="card dashboard-metric-card text-start" th:each="card : ${scope == 'day' ? dayCards : (scope == 'month' ? monthCards : currentCards)}"
+        th:classappend="${card.money ? 'dashboard-metric-money' : ''}" data-bs-toggle="modal" data-bs-target="#dashboardDetailsModal"
+        th:attr="data-dashboard-kind=${card.kind},data-dashboard-scope=${scope},data-dashboard-selected-date=${selectedDate},data-dashboard-selected-month=${selectedMonth}">
+        <span class="kpi-icon"><i th:class="'bi bi-'+${card.icon}"></i></span>
+        <div class="kpi-label" th:text="${card.label}"></div>
+        <div class="kpi-value" th:text="${card.money ? '฿'+#numbers.formatDecimal(card.value,1,'COMMA',2,'POINT') : #numbers.formatInteger(card.value,1,'COMMA')}"></div>
+        <small class="text-muted" th:text="${card.caption}"></small>
+      </button>
+    </div>
+  </section>
+</div>

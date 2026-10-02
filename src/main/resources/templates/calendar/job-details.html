@@ -14,6 +14,43 @@
           </div>
         </div>
         <div class="card-body">
+          <div class="mb-3" th:if="${job.jobStatus.name()=='NEW' or job.jobStatus.name()=='SCHEDULED' or job.jobStatus.name()=='ASSIGNED'}">
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="collapse" th:attr="data-bs-target='#modalAssignJob'+${job.id}">
+              <i class="bi bi-person-check me-1"></i><span th:text="${job.technician == null ? 'มอบหมายหัวหน้าช่าง' : 'เปลี่ยนหัวหน้าช่าง'}"></span>
+            </button>
+            <div class="collapse mt-3" th:id="'modalAssignJob'+${job.id}">
+              <form data-modal-job-assign method="post" th:action="@{/jobs/{id}/assign/modal(id=${job.id})}" th:attr="data-details-url=@{/calendar/jobs/{id}/details(id=${job.id})}">
+                <label class="form-label required" th:for="'modalTechnician'+${job.id}">หัวหน้าช่าง</label>
+                <div class="d-flex flex-wrap gap-2">
+                  <select class="form-select flex-grow-1" style="width:auto" name="technicianId" th:id="'modalTechnician'+${job.id}" required>
+                    <option value="">เลือกหัวหน้าช่าง</option>
+                    <option th:each="technician : ${technicians}" th:value="${technician.id}" th:text="${technician.fullName}" th:selected="${job.technician != null and job.technician.id == technician.id}"></option>
+                  </select>
+                  <button type="submit" class="btn btn-primary">บันทึกการมอบหมาย</button>
+                </div>
+                <small class="text-muted d-block mt-2">ระบบจะตรวจสอบงานซ้อนก่อนบันทึก</small>
+                <div data-assign-error class="text-danger small mt-2" role="alert"></div>
+              </form>
+            </div>
+          </div>
+            <div class="mb-3" th:if="${job.jobStatus.name()=='NEW' or job.jobStatus.name()=='SCHEDULED' or job.jobStatus.name()=='ASSIGNED'}">
+              <button type="button" class="btn btn-outline-primary" data-bs-toggle="collapse" th:attr="data-bs-target='#rescheduleJob'+${job.id}">เลื่อนนัด</button>
+              <div class="collapse mt-3" th:id="'rescheduleJob'+${job.id}">
+                <form data-modal-job-assign data-job-reschedule method="post" th:action="@{/jobs/{id}/reschedule/modal(id=${job.id})}" th:attr="data-details-url=@{/calendar/jobs/{id}/details(id=${job.id})}">
+                  <div class="row g-3">
+                    <div class="col-6"><label class="form-label required">วันที่เริ่มใหม่</label><input class="form-control" name="startDate" data-reschedule-date th:value="${#temporals.format(job.appointmentStart,'yyyy-MM-dd')}" required /></div>
+                    <div class="col-6"><label class="form-label required">เวลาเริ่มใหม่</label><select class="form-select" name="startTime" data-reschedule-time th:attr="data-initial-time=${#temporals.format(job.appointmentStart,'HH:mm')}" required></select></div>
+                    <div class="col-6"><label class="form-label required">วันที่สิ้นสุดใหม่</label><input class="form-control" name="endDate" data-reschedule-date th:value="${#temporals.format(job.appointmentEnd,'yyyy-MM-dd')}" required /></div>
+                    <div class="col-6"><label class="form-label required">เวลาสิ้นสุดใหม่</label><select class="form-select" name="endTime" data-reschedule-time th:attr="data-initial-time=${#temporals.format(job.appointmentEnd,'HH:mm')}" required></select></div>
+                    <div class="col-12"><label class="form-label required">หัวหน้าช่างสำหรับนัดหมายใหม่</label><select name="technicianId" class="form-select" required><option value="">เลือกหัวหน้าช่างอีกครั้ง</option><option th:each="technician : ${technicians}" th:value="${technician.id}" th:text="${technician.fullName}"></option></select></div>
+                    <div class="col-12"><label class="form-label required">เหตุผลการเลื่อนนัด</label><textarea name="reason" class="form-control" maxlength="500" rows="2" required></textarea></div>
+                  </div>
+                  <small class="text-muted d-block my-2">สามารถเลือกช่างเดิมได้ ระบบจะตรวจงานซ้อนตามเวลาใหม่ก่อนบันทึก</small>
+                  <div data-assign-error class="text-danger small mb-2" role="alert"></div>
+                  <button type="submit" class="btn btn-primary">บันทึกการเลื่อนนัด</button>
+                </form>
+              </div>
+            </div>
           <div class="info-grid">
             <div class="info-block">
               <div class="info-label">ลูกค้า</div>
@@ -74,7 +111,7 @@
                 <td th:text="${st.count}"></td>
                 <td th:text="${item.description}"></td>
                 <td th:text="${enumLabels[item.itemType.name()]}"></td>
-                <td class="text-end" th:text="${item.quantity}"></td>
+                <td class="text-end" th:text="${#numbers.formatDecimal(item.quantity,1,'COMMA',0,'POINT')}"></td>
                 <td th:text="${item.unit}"></td>
                 <td class="text-end" th:text="${#numbers.formatDecimal(item.unitPrice,1,'COMMA',2,'POINT')}"></td>
                 <td class="text-end" th:text="${#numbers.formatDecimal(item.total,1,'COMMA',2,'POINT')}"></td>
@@ -106,13 +143,13 @@
           </div>
         </div>
         <div class="list-group list-group-flush" th:if="${!#lists.isEmpty(payments)}">
-          <a class="list-group-item list-group-item-action" th:each="payment:${payments}" th:href="@{/payments/{id}/receipt(id=${payment.id})}" target="_blank">
+          <a class="list-group-item list-group-item-action" th:each="payment:${payments}" th:href="@{/payments/{id}/receipt(id=${payment.id})}" data-receipt-preview target="_blank">
             <div class="d-flex justify-content-between gap-2"><strong th:text="${payment.receiptNo}"></strong><span th:text="'฿'+${#numbers.formatDecimal(payment.amount,1,'COMMA',2,'POINT')}"></span></div>
             <small class="text-muted" th:text="${#temporals.format(payment.paymentDate,'dd/MM/yyyy HH:mm')+' · '+enumLabels[payment.paymentMethod.name()]}"></small>
           </a>
         </div>
         <div class="list-group list-group-flush" th:if="${!#lists.isEmpty(refunds)}">
-          <a class="list-group-item list-group-item-action" th:each="refund:${refunds}" th:href="@{/refunds/{id}/receipt(id=${refund.id})}" target="_blank">
+          <a class="list-group-item list-group-item-action" th:each="refund:${refunds}" th:href="@{/refunds/{id}/receipt(id=${refund.id})}" data-receipt-preview target="_blank">
             <div class="d-flex justify-content-between gap-2"><strong th:text="${refund.receiptNo}"></strong><span class="text-warning" th:text="'คืน ฿'+${#numbers.formatDecimal(refund.amount,1,'COMMA',2,'POINT')}"></span></div>
             <small class="text-muted" th:text="${#temporals.format(refund.refundDate,'dd/MM/yyyy HH:mm')+' · '+refund.reason}"></small>
           </a>

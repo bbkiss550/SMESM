@@ -68,7 +68,7 @@
                     class="text-end"
                     th:text="${#numbers.formatDecimal(p.salePrice,1,'COMMA',2,'POINT')}"
                   ></td>
-                  <td class="text-end fw-bold" th:text="${p.stockQty}"></td>
+                  <td class="text-end fw-bold" th:text="${#numbers.formatDecimal(p.stockQty,1,'COMMA',0,'POINT')}"></td>
                   <td>
                     <span
                       class="status-badge"

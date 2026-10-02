@@ -22,23 +22,25 @@
             data-bs-target="#createJobModal"
           ><i class="bi bi-plus-lg me-2"></i>สร้างใบงาน</button>
         </div>
-        <section class="kpi-grid" style="grid-template-columns: repeat(6, 1fr)">
-          <article class="card kpi-card">
+        <section class="kpi-grid job-kpi-grid">
+          <button type="button" class="card kpi-card text-start" data-job-status-filter=""
+            th:attr="aria-pressed=${selectedStatus == null}">
             <div>
               <div class="kpi-label">ทั้งหมด</div>
-              <div class="kpi-value" th:text="${jobs.totalElements}">128</div>
+              <div class="kpi-value" th:text="${totalJobs}">0</div>
             </div>
-          </article>
-          <article
-            class="card kpi-card"
+          </button>
+          <button
+            type="button" class="card kpi-card text-start"
             th:each="s:${statuses}"
             th:if="${s.name() != 'CANCELLED'}"
+            th:attr="data-job-status-filter=${s.name()},aria-pressed=${s == selectedStatus}"
           >
             <div>
               <div class="kpi-label" th:text="${statusLabels[s.name()]}"></div>
-              <div class="kpi-value fs-3">—</div>
+              <div class="kpi-value" th:text="${jobStatusCounts[s.name()]}">0</div>
             </div>
-          </article>
+          </button>
         </section>
         <form class="card filter-bar" method="get" data-ajax-search="jobs">
           <div class="row g-2 align-items-center">
@@ -89,11 +91,10 @@
               <tbody>
                 <tr th:each="job:${jobs.content}">
                   <td>
-                    <a
+                    <span
                       class="fw-bold"
-                      th:href="@{/jobs/{id}(id=${job.id})}"
                       th:text="${job.jobNo}"
-                    ></a>
+                    ></span>
                   </td>
                   <td>
                     <strong th:text="${job.customer.displayName}"></strong
@@ -123,7 +124,9 @@
                   ></td>
                   <td>
                     <div class="d-flex flex-wrap gap-1">
-                      <a class="btn btn-sm btn-outline-primary text-nowrap" th:href="@{/jobs/{id}(id=${job.id})}"><i class="bi bi-eye me-1"></i>ดูข้อมูล</a>
+                      <button type="button" class="btn btn-sm btn-outline-primary text-nowrap"
+                        data-bs-toggle="modal" data-bs-target="#jobDetailsModal"
+                        th:attr="data-job-details-url=@{/calendar/jobs/{id}/details(id=${job.id})}"><i class="bi bi-eye me-1"></i>ดูข้อมูล</button>
                       <a class="btn btn-sm btn-outline-danger text-nowrap" th:if="${job.jobStatus.name()!='COMPLETED' and job.jobStatus.name()!='CANCELLED'}" th:href="@{/jobs/{id}(id=${job.id})} + '#cancelModal'"><i class="bi bi-x-circle me-1"></i>ยกเลิกงาน</a>
                     </div>
                   </td>
@@ -164,6 +167,22 @@
           <div class="modal-body p-0">
             <div th:replace="~{job/form :: jobCreateForm}"></div>
           </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="jobDetailsModal" tabindex="-1" aria-labelledby="jobDetailsModalTitle" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered modal-fullscreen-lg-down">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title fs-5" id="jobDetailsModalTitle">รายละเอียดใบงาน</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="ปิด"></button>
+          </div>
+          <div class="modal-body" id="jobDetailsModalBody" aria-live="polite">
+            <div class="d-flex justify-content-center align-items-center gap-2 py-5 text-muted">
+              <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>กำลังโหลดรายละเอียดใบงาน...
+            </div>
+          </div>
+          <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ปิด</button></div>
         </div>
       </div>
     </div>

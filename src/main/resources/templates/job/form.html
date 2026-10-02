@@ -24,8 +24,14 @@
           th:object="${jobForm}"
           method="post"
           class="card job-create-form"
+          th:attr="data-modal-job-create=${modalMode == true ? 'true' : null}"
         >
           <div class="card-body p-lg-4">
+            <div class="alert alert-danger" th:if="${#fields.hasErrors('*')}" role="alert">
+              <ul class="mb-0">
+                <li class="text-danger" th:each="error : ${#fields.errors('*')}" th:text="${error}"></li>
+              </ul>
+            </div>
             <div class="row g-4">
               <div
                 class="col-12"
@@ -70,8 +76,13 @@
                         th:each="s:${services}"
                         th:value="${s.id}"
                         th:text="${s.serviceCode+' · '+s.serviceName}"
+                        th:data-price="${s.defaultPrice}"
                       ></option>
                     </select>
+                    <div class="mt-2 p-2 rounded bg-primary bg-opacity-10" aria-live="polite">
+                      <span class="small">ราคาบริการ</span>
+                      <strong class="text-primary ms-2" data-job-service-price>—</strong>
+                    </div>
                   </div>
                   <div class="col-12">
                     <label class="form-label required">หัวข้องาน</label
@@ -238,6 +249,7 @@
                       class="form-control"
                       rows="3"
                       th:field="*{address}"
+                      required
                     ></textarea>
                   </div>
                   <div class="col-12">
@@ -307,25 +319,5 @@
       </main>
     </div>
     <div th:replace="~{fragments/layout :: scripts}"></div>
-    <script>
-      const customer = document.querySelector('[name="customerId"]');
-      customer?.addEventListener("change", () => {
-        const o = customer.selectedOptions[0];
-        if (
-          o?.dataset.address &&
-          !document.querySelector('[name="address"]').value
-        )
-          document.querySelector('[name="address"]').value = o.dataset.address;
-        if (
-          o?.dataset.phone &&
-          !document.querySelector('[name="contactPhone"]').value
-        )
-          document.querySelector('[name="contactPhone"]').value =
-            o.dataset.phone.slice(0, 10);
-        document.querySelector('[name="contactPhone"]')?.dispatchEvent(
-          new Event("input", { bubbles: true }),
-        );
-      });
-    </script>
   </body>
 </html>

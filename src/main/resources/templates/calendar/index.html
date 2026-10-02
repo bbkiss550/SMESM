@@ -74,8 +74,8 @@
                 class="calendar-event"
                 th:each="job:${day.jobs}"
                 data-bs-toggle="modal"
-                data-bs-target="#calendarJobModal"
-                th:attr="data-job-details-url=@{/calendar/jobs/{id}/details(id=${job.id})},data-job-url=@{/jobs/{id}(id=${job.id})}"
+                data-bs-target="#jobDetailsModal"
+                th:attr="data-job-details-url=@{/calendar/jobs/{id}/details(id=${job.id})}"
                 th:style="${job.jobStatus.name()=='COMPLETED'?'border-color:#10b981':(job.jobStatus.name()=='WAITING_PART'?'border-color:#f59e0b':'')}"
                 ><strong
                   th:text="${#temporals.format(job.appointmentStart,'HH:mm')+' '+job.customer.displayName}"
@@ -95,29 +95,24 @@
     </div>
     <div
       class="modal fade"
-      id="calendarJobModal"
+      id="jobDetailsModal"
       tabindex="-1"
-      aria-labelledby="calendarJobModalTitle"
+      aria-labelledby="jobDetailsModalTitle"
       aria-hidden="true"
     >
       <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered modal-fullscreen-lg-down">
         <div class="modal-content">
           <div class="modal-header">
-            <h2 class="modal-title fs-5" id="calendarJobModalTitle">รายละเอียดใบงาน</h2>
+            <h2 class="modal-title fs-5" id="jobDetailsModalTitle">รายละเอียดใบงาน</h2>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="ปิด"></button>
           </div>
-          <div class="modal-body" id="calendarJobModalBody" aria-live="polite">
+          <div class="modal-body" id="jobDetailsModalBody" aria-live="polite">
             <div class="d-flex justify-content-center align-items-center gap-2 py-5 text-muted">
               <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
               กำลังโหลดรายละเอียดใบงาน...
             </div>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ปิด</button>
-            <a id="calendarJobDetailLink" class="btn btn-primary" href="#">
-              <i class="bi bi-box-arrow-up-right me-1"></i>ไปหน้าใบงาน
-            </a>
-          </div>
+          <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ปิด</button></div>
         </div>
       </div>
     </div>
