@@ -4,6 +4,7 @@ storage/uploads/
 .env
 .env.*
 !.env.example
+!.env.uat.example
 *.log
 node_modules/
 .mvn/wrapper/maven-wrapper.jar

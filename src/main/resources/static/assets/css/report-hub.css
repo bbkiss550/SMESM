@@ -4,6 +4,32 @@
   font-weight: 100 900;
   font-display: swap;
 }
+.report-hub .report-groups[hidden], .report-hub-heading[hidden] { display: none; }
+.report-content.service-report-container:not([hidden]) { display: block; padding: 0; background: transparent; border: 0; }
+.service-report-summary { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; }
+.service-report .card { border-radius: 12px; box-shadow: 0 4px 15px rgba(30,77,125,.04); }
+.service-report-summary .card { gap: 6px; }
+.service-report-pdf-pages { max-height: 75vh; overflow: auto; padding: 16px; background: #edf3f9; }
+.service-report-pdf-page { max-width: 100%; width: max-content; margin: 0 auto 18px; }
+.service-report-pdf-page span { display: block; margin-bottom: 6px; color: #52657b; font-size: 12px; }
+.service-report-pdf-page canvas { display: block; max-width: 100%; height: auto; background: #fff; box-shadow: 0 4px 18px rgba(30,77,125,.14); }
+@page { size: A4 landscape; margin: 0; }
+@media print {
+  body > :not(#serviceReportPreviewModal) { display: none !important; }
+  body, body.modal-open { margin: 0 !important; padding: 0 !important; overflow: visible !important; background: #fff !important; }
+  #serviceReportPreviewModal { display: block !important; position: static !important; overflow: visible !important; padding: 0 !important; }
+  #serviceReportPreviewModal .modal-dialog { width: 297mm !important; max-width: none !important; margin: 0 !important; transform: none !important; }
+  #serviceReportPreviewModal .modal-content { display: block !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+  #serviceReportPreviewModal .modal-header, #serviceReportPreviewModal .modal-footer,
+  #serviceReportPreviewModal .service-report-pdf-loading, #serviceReportPreviewModal .service-report-pdf-page span,
+  .modal-backdrop { display: none !important; }
+  #serviceReportPreviewModal .service-report-pdf-pages { display: block !important; max-height: none !important; overflow: visible !important; padding: 0 !important; background: #fff !important; }
+  #serviceReportPreviewModal .service-report-pdf-page { width: 297mm !important; height: 210mm !important; max-width: none !important; margin: 0 !important; break-after: page; page-break-after: always; }
+  #serviceReportPreviewModal .service-report-pdf-page:last-child { break-after: auto; page-break-after: auto; }
+  #serviceReportPreviewModal .service-report-pdf-page canvas { width: 297mm !important; height: auto !important; max-width: none !important; box-shadow: none !important; }
+}
+@media(max-width: 1100px) { .service-report-summary { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media(max-width: 575px) { .service-report-summary { grid-template-columns: 1fr; } }
 .report-hub { font-family: 'Noto Sans Thai', var(--sm-font-sans); background: radial-gradient(ellipse at top, #eefaff 0%, var(--sm-bg) 75%); min-height: calc(100vh - 70px); }
 .report-hub button { font-family: inherit; }
 .report-hub-heading { margin-bottom: 30px; }

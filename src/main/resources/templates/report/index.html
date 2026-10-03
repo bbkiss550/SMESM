@@ -34,14 +34,28 @@
             </div>
           </section>
         </div>
-        <!-- Reserved for future report detail rendering without changing the browser URL. -->
+        <!-- Report details load here without changing the browser URL. -->
         <section id="report-content" class="report-content" aria-live="polite" hidden>
           <i class="bi bi-info-circle" aria-hidden="true"></i>
           <div><h2 data-report-content-title></h2><p>ส่วนรายละเอียดรายงานยังไม่เปิดใช้งาน</p></div>
         </section>
       </main>
     </div>
+    <div class="modal fade" id="serviceReportPreviewModal" tabindex="-1" aria-labelledby="serviceReportPreviewTitle" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-lg-down">
+        <div class="modal-content">
+          <div class="modal-header"><h2 class="modal-title fs-5" id="serviceReportPreviewTitle">หน้ากระดาษรายงานงานบริการ</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="ปิด"></button></div>
+          <div class="modal-body p-0">
+            <div class="service-report-pdf-loading p-5 text-center" data-pdf-loading><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>กำลังสร้างหน้ากระดาษรายงาน…</div>
+            <div class="alert alert-danger m-3" data-pdf-error role="alert" hidden>สร้าง PDF ไม่สำเร็จ กรุณาลองอีกครั้ง</div>
+            <div class="service-report-pdf-pages" data-pdf-pages aria-label="ตัวอย่างหน้ากระดาษรายงานงานบริการ" hidden></div>
+          </div>
+          <div class="modal-footer"><button type="button" class="btn btn-primary" data-pdf-print disabled><i class="bi bi-printer me-2"></i>พิมพ์รายงาน</button><a class="btn btn-outline-primary" data-pdf-download download="service-report.pdf" hidden><i class="bi bi-download me-2"></i>บันทึก PDF</a><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button></div>
+        </div>
+      </div>
+    </div>
     <div th:replace="~{fragments/layout :: scripts}"></div>
     <script th:src="@{/assets/js/report-hub.js(v='20261002-1')}"></script>
+    <script th:src="@{/assets/js/service-report.js(v='20261003-6')}"></script>
   </body>
 </html>

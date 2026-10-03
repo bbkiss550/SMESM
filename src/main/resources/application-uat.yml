@@ -1,0 +1,9 @@
+spring:
+  config:
+    import: optional:file:.env.uat[.properties]
+  datasource:
+    url: ${UAT_DB_URL}
+    username: ${UAT_DB_USERNAME}
+    password: ${UAT_DB_PASSWORD}
+  flyway:
+    enabled: false

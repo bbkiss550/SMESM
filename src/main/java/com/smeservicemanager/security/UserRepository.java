@@ -12,6 +12,9 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
     @EntityGraph(attributePaths = "role")
+    @Query("select u from User u where u.role.code = 'TECHNICIAN' order by u.firstName, u.id")
+    List<User> findReportTechnicians();
+    @EntityGraph(attributePaths = "role")
     Optional<User> findByUsernameIgnoreCase(String username);
 
     @EntityGraph(attributePaths = "role")

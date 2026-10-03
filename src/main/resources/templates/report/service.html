@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<section th:fragment="detail" class="service-report">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div><h2 class="fs-4 fw-bold"><i class="bi bi-tools text-primary me-2"></i>รายงานงานบริการ</h2>
+      <p class="text-muted mb-0">ติดตามใบงานตามช่วงวันที่ ประเภทบริการ และหัวหน้าช่าง</p></div>
+    <button type="button" class="btn btn-outline-secondary" data-report-back><i class="bi bi-arrow-left me-2"></i>กลับหน้ารวมรายงาน</button>
+  </div>
+  <form class="card p-3 mb-3" data-service-report-form>
+    <div class="row g-3">
+      <div class="col-md-4"><label class="form-label" for="report-basis">วันที่อ้างอิง</label>
+        <select id="report-basis" name="basis" class="form-select">
+          <option value="CREATED" th:selected="${basis.name() == 'CREATED'}">วันที่สร้างใบงาน</option>
+          <option value="APPOINTMENT" th:selected="${basis.name() == 'APPOINTMENT'}">วันที่นัดหมาย</option>
+          <option value="COMPLETED" th:selected="${basis.name() == 'COMPLETED'}">วันที่ปิดงาน</option>
+        </select></div>
+      <div class="col-md-4"><label class="form-label" for="report-start">วันที่เริ่มต้น</label><input id="report-start" type="date" class="form-control" name="start" th:value="${start}" required></div>
+      <div class="col-md-4"><label class="form-label" for="report-end">วันที่สิ้นสุด</label><input id="report-end" type="date" class="form-control" name="end" th:value="${end}" required></div>
+      <div class="col-md-4"><label class="form-label" for="report-status">สถานะงาน</label><select id="report-status" name="status" class="form-select"><option value="">ทุกสถานะ</option><option th:each="s:${statuses}" th:value="${s}" th:text="${statusLabels[s.name()]}" th:selected="${s == selectedStatus}"></option></select></div>
+      <div class="col-md-4"><label class="form-label" for="report-service">ประเภทบริการ</label><select id="report-service" name="serviceId" class="form-select"><option value="">ทุกบริการ</option><option th:each="s:${services}" th:value="${s.id}" th:text="${s.serviceName}" th:selected="${s.id == serviceId}"></option></select></div>
+      <div class="col-md-4"><label class="form-label" for="report-technician">หัวหน้าช่าง</label><select id="report-technician" name="technicianId" class="form-select"><option value="">ทุกคน (รวมงานที่ยังไม่มอบหมาย)</option><option th:each="t:${technicians}" th:value="${t.id}" th:text="${t.fullName}" th:selected="${t.id == technicianId}"></option></select></div>
+    </div>
+    <div class="d-flex flex-wrap gap-2 mt-3"><button class="btn btn-primary" type="submit"><i class="bi bi-search me-2"></i>แสดงรายงาน</button><button class="btn btn-outline-secondary" type="button" data-report-reset>ล้างตัวกรอง</button><button class="btn btn-outline-primary" type="button" data-service-pdf><i class="bi bi-file-earmark-pdf me-2"></i>ดูหน้ากระดาษรายงาน</button></div>
+    <small class="text-muted mt-3">รวมวันเริ่มต้นและวันสิ้นสุด • วันที่ปิดงานแสดงเฉพาะใบงานที่มีวันปิดงาน • รวมงานปกติและงานแก้ • สถานะเป็นสถานะปัจจุบันของใบงาน</small>
+  </form>
+  <div th:if="${reportError != null}" class="alert alert-warning" role="alert" th:text="${reportError}"></div>
+  <div th:if="${result != null}">
+    <div class="service-report-summary mb-3">
+      <div class="card p-3"><span class="text-muted">ใบงานทั้งหมด</span><strong class="fs-3" th:text="${result.total}"></strong></div>
+      <div class="card p-3"><span class="text-muted">เสร็จสิ้น</span><strong class="fs-3 text-success" th:text="${result.completed}"></strong></div>
+      <div class="card p-3"><span class="text-muted">ยกเลิก</span><strong class="fs-3 text-danger" th:text="${result.cancelled}"></strong></div>
+      <div class="card p-3"><span class="text-muted">มูลค่าใบงาน (ไม่รวมยกเลิก)</span><strong class="fs-4" th:text="'฿' + ${#numbers.formatDecimal(result.value,1,'COMMA',2,'POINT')}"></strong><small class="text-muted">ยอดสุทธิรวม VAT ตามใบงาน ไม่ใช่ยอดรับชำระ</small></div>
+    </div>
+    <section class="card">
+      <div class="p-3 border-bottom d-flex justify-content-between flex-wrap gap-2"><strong>รายการงานบริการ</strong><span class="text-muted" th:text="'พบ ' + ${result.total} + ' รายการ' "></span></div>
+      <div class="table-responsive"><table class="table table-hover mb-0">
+        <thead><tr><th>เลขที่ใบงาน / หัวข้องาน</th><th>ลูกค้า</th><th>บริการ</th><th>หัวหน้าช่าง</th><th>วันที่อ้างอิง (พ.ศ.)</th><th>สถานะ</th><th class="text-end">ยอดสุทธิ</th></tr></thead>
+        <tbody><tr th:each="job:${result.jobs}">
+          <td><strong th:text="${job.jobNo}"></strong><small class="d-block text-muted" th:text="${job.title}"></small><small th:if="${job.jobType.name() == 'REWORK'}" class="text-primary">งานแก้ / กลับมาซ่อม</small></td>
+          <td th:text="${job.customer.displayName}"></td><td th:text="${job.service.serviceName}"></td><td th:text="${job.technician != null ? job.technician.fullName : 'ยังไม่มอบหมาย'}"></td>
+          <td class="text-nowrap" th:with="d=${basis.name() == 'CREATED' ? job.createDate : (basis.name() == 'APPOINTMENT' ? job.appointmentStart : job.completedDate)}" th:text="${#temporals.format(d,'dd/MM/')} + ${d.year + 543} + ${#temporals.format(d,' HH:mm')}"></td>
+          <td><span class="status-badge text-nowrap" th:classappend="'status-' + ${job.jobStatus}" th:text="${statusLabels[job.jobStatus.name()]}"></span></td>
+          <td class="text-end text-nowrap" th:text="'฿' + ${#numbers.formatDecimal(job.grandTotal,1,'COMMA',2,'POINT')}"></td>
+        </tr><tr th:if="${result.total == 0}"><td colspan="7"><div class="empty-state"><i class="bi bi-inbox"></i>ไม่พบข้อมูลตามเงื่อนไขที่เลือก</div></td></tr></tbody>
+      </table></div>
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 p-3">
+        <span class="text-muted" th:text="'หน้า ' + ${result.page + 1} + ' จาก ' + ${result.pages} + ' • หน้าละ 10 รายการ'"></span>
+        <div class="d-flex gap-2"><button class="btn btn-sm btn-outline-primary" type="button" th:disabled="${result.page == 0}" th:attr="data-service-page=${result.page - 1}">ก่อนหน้า</button><button class="btn btn-sm btn-outline-primary" type="button" th:disabled="${result.page + 1 >= result.pages}" th:attr="data-service-page=${result.page + 1}">ถัดไป</button></div>
+      </div>
+    </section>
+  </div>
+</section>
+</html>

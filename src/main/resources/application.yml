@@ -1,12 +1,9 @@
 spring:
   application:
     name: SME Service Manager
-  config:
-    import: optional:file:.env[.properties]
+  profiles:
+    default: localhost
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/db_service_demo}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:}
     hikari:
       maximum-pool-size: ${DB_POOL_SIZE:10}
       connection-timeout: 20000

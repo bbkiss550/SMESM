@@ -2,7 +2,7 @@ package com.smeservicemanager.report;
 
 import java.util.List;
 
-/** Navigation metadata only; detail reports are intentionally not implemented. */
+/** Metadata for the nine report cards in the report hub. */
 public final class ReportCatalog {
     private ReportCatalog() {}
     public record Report(String code, int number, String title, String description, String icon) {}

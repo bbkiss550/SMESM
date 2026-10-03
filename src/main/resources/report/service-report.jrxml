@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport name="ServiceReport" pageWidth="842" pageHeight="595" orientation="Landscape"
+              columnWidth="770" leftMargin="36" rightMargin="36" topMargin="28" bottomMargin="28"
+              whenNoDataType="AllSectionsNoDetail">
+  <property name="net.sf.jasperreports.export.pdf.metadata.title" value="รายงานงานบริการ"/>
+  <style name="Thai" default="true" fontName="Sarabun" fontSize="11" forecolor="#161616"/>
+  <parameter name="companyName" class="java.lang.String"/>
+  <parameter name="companyAddress" class="java.lang.String"/>
+  <parameter name="period" class="java.lang.String"/>
+  <parameter name="periodDays" class="java.lang.String"/>
+  <parameter name="basisLabel" class="java.lang.String"/>
+  <parameter name="statusFilter" class="java.lang.String"/>
+  <parameter name="serviceFilter" class="java.lang.String"/>
+  <parameter name="technicianFilter" class="java.lang.String"/>
+  <parameter name="totalCount" class="java.lang.String"/>
+  <parameter name="completedCount" class="java.lang.String"/>
+  <parameter name="cancelledCount" class="java.lang.String"/>
+  <parameter name="valueAmount" class="java.lang.String"/>
+  <parameter name="generatedAt" class="java.lang.String"/>
+  <field name="jobNo" class="java.lang.String"/>
+  <field name="customer" class="java.lang.String"/>
+  <field name="service" class="java.lang.String"/>
+  <field name="technician" class="java.lang.String"/>
+  <field name="date" class="java.lang.String"/>
+  <field name="status" class="java.lang.String"/>
+  <field name="amount" class="java.lang.String"/>
+  <title height="216">
+    <element kind="staticText" x="0" y="0" width="470" height="40" fontSize="27" bold="true"><text><![CDATA[รายงานงานบริการ]]></text></element>
+    <element kind="staticText" x="0" y="41" width="490" height="18" fontSize="12"><text><![CDATA[SME Service Manager  |  SERVICE REPORT]]></text></element>
+    <element kind="textField" x="530" y="3" width="240" height="18" hTextAlign="Right" fontSize="10"><expression><![CDATA[$P{generatedAt}]]></expression></element>
+    <element kind="textField" x="649" y="24" width="86" height="17" hTextAlign="Right" fontSize="10"><expression><![CDATA["หน้า " + $V{PAGE_NUMBER} + " จาก"]]></expression></element>
+    <element kind="textField" x="737" y="24" width="33" height="17" fontSize="10" evaluationTime="Report"><expression><![CDATA[$V{PAGE_NUMBER}]]></expression></element>
+    <element kind="line" x="0" y="65" width="770" height="1" forecolor="#222222"/>
+
+    <element kind="textField" x="4" y="78" width="288" height="24" fontSize="14" bold="true" textAdjust="ScaleFont"><expression><![CDATA[$P{companyName}]]></expression></element>
+    <element kind="textField" x="4" y="103" width="288" height="38" fontSize="11" textAdjust="ScaleFont"><expression><![CDATA[$P{companyAddress}]]></expression></element>
+    <element kind="line" x="303" y="80" width="1" height="62" forecolor="#919191"/>
+
+    <element kind="staticText" x="322" y="78" width="205" height="19" fontSize="12" bold="true"><text><![CDATA[ช่วงข้อมูล]]></text></element>
+    <element kind="textField" x="322" y="98" width="205" height="24" fontSize="15" bold="true" textAdjust="ScaleFont"><expression><![CDATA[$P{period}]]></expression></element>
+    <element kind="textField" x="322" y="121" width="205" height="19" fontSize="11"><expression><![CDATA[$P{periodDays} + " • " + $P{basisLabel}]]></expression></element>
+    <element kind="line" x="538" y="80" width="1" height="62" forecolor="#919191"/>
+
+    <element kind="staticText" x="557" y="78" width="207" height="19" fontSize="12" bold="true"><text><![CDATA[ตัวกรอง]]></text></element>
+    <element kind="textField" x="557" y="98" width="102" height="20" fontSize="10" textAdjust="ScaleFont"><expression><![CDATA["สถานะ: " + $P{statusFilter}]]></expression></element>
+    <element kind="textField" x="666" y="98" width="98" height="20" fontSize="10" textAdjust="ScaleFont"><expression><![CDATA["บริการ: " + $P{serviceFilter}]]></expression></element>
+    <element kind="textField" x="557" y="120" width="207" height="20" fontSize="10" textAdjust="ScaleFont"><expression><![CDATA["หัวหน้าช่าง: " + $P{technicianFilter}]]></expression></element>
+
+    <element kind="line" x="0" y="149" width="770" height="1" forecolor="#222222"/>
+    <element kind="staticText" x="0" y="157" width="192" height="19" hTextAlign="Center" bold="true"><text><![CDATA[ใบงานทั้งหมด]]></text></element>
+    <element kind="staticText" x="193" y="157" width="192" height="19" hTextAlign="Center" bold="true"><text><![CDATA[เสร็จสิ้น]]></text></element>
+    <element kind="staticText" x="386" y="157" width="191" height="19" hTextAlign="Center" bold="true"><text><![CDATA[ยกเลิก]]></text></element>
+    <element kind="staticText" x="578" y="157" width="192" height="19" hTextAlign="Center" bold="true"><text><![CDATA[มูลค่าใบงานรวม]]></text></element>
+    <element kind="textField" x="0" y="176" width="192" height="30" hTextAlign="Center" fontSize="19" bold="true"><expression><![CDATA[$P{totalCount}]]></expression></element>
+    <element kind="textField" x="193" y="176" width="192" height="30" hTextAlign="Center" fontSize="19" bold="true"><expression><![CDATA[$P{completedCount}]]></expression></element>
+    <element kind="textField" x="386" y="176" width="191" height="30" hTextAlign="Center" fontSize="19" bold="true"><expression><![CDATA[$P{cancelledCount}]]></expression></element>
+    <element kind="textField" x="578" y="176" width="192" height="30" hTextAlign="Center" fontSize="17" bold="true"><expression><![CDATA[$P{valueAmount}]]></expression></element>
+    <element kind="line" x="192" y="157" width="1" height="50" forecolor="#919191"/>
+    <element kind="line" x="385" y="157" width="1" height="50" forecolor="#919191"/>
+    <element kind="line" x="577" y="157" width="1" height="50" forecolor="#919191"/>
+    <element kind="line" x="0" y="210" width="770" height="1" forecolor="#222222"/>
+  </title>
+  <columnHeader height="30">
+    <element kind="rectangle" x="0" y="3" width="770" height="27" mode="Opaque" backcolor="#EFF0F2"/>
+    <element kind="line" x="0" y="29" width="770" height="1" forecolor="#777777"/>
+    <element kind="staticText" x="7" y="8" width="101" height="18" bold="true"><text><![CDATA[เลขที่ใบงาน]]></text></element>
+    <element kind="staticText" x="115" y="8" width="118" height="18" bold="true"><text><![CDATA[ลูกค้า]]></text></element>
+    <element kind="staticText" x="240" y="8" width="123" height="18" bold="true"><text><![CDATA[บริการ]]></text></element>
+    <element kind="staticText" x="370" y="8" width="95" height="18" bold="true"><text><![CDATA[หัวหน้าช่าง]]></text></element>
+    <element kind="staticText" x="472" y="8" width="108" height="18" bold="true"><text><![CDATA[วันที่อ้างอิง]]></text></element>
+    <element kind="staticText" x="587" y="8" width="65" height="18" bold="true"><text><![CDATA[สถานะ]]></text></element>
+    <element kind="staticText" x="659" y="8" width="104" height="18" bold="true" hTextAlign="Right"><text><![CDATA[ยอดสุทธิ (บาท)]]></text></element>
+  </columnHeader>
+  <detail>
+    <band height="25" splitType="Prevent">
+      <element kind="line" x="0" y="24" width="770" height="1" forecolor="#B8B8B8"/>
+      <element kind="textField" x="7" y="3" width="101" height="19" fontSize="11"><expression><![CDATA[$F{jobNo}]]></expression></element>
+      <element kind="textField" x="115" y="3" width="118" height="19" fontSize="11"><expression><![CDATA[$F{customer}]]></expression></element>
+      <element kind="textField" x="240" y="3" width="123" height="19" fontSize="11"><expression><![CDATA[$F{service}]]></expression></element>
+      <element kind="textField" x="370" y="3" width="95" height="19" fontSize="11"><expression><![CDATA[$F{technician}]]></expression></element>
+      <element kind="textField" x="472" y="3" width="108" height="19" fontSize="11"><expression><![CDATA[$F{date}]]></expression></element>
+      <element kind="textField" x="587" y="3" width="65" height="19" fontSize="11"><expression><![CDATA[$F{status}]]></expression></element>
+      <element kind="textField" x="659" y="3" width="104" height="19" fontSize="11" hTextAlign="Right"><expression><![CDATA[$F{amount}]]></expression></element>
+    </band>
+  </detail>
+  <pageFooter height="28">
+    <element kind="line" x="0" y="2" width="770" height="1" forecolor="#222222"/>
+    <element kind="staticText" x="0" y="8" width="595" height="17" fontSize="9"><text><![CDATA[สถานะ ณ วันที่พิมพ์  •  มูลค่าใบงานไม่รวมงานยกเลิก และไม่ใช่ยอดรับชำระ]]></text></element>
+    <element kind="textField" x="649" y="8" width="86" height="17" hTextAlign="Right" fontSize="9"><expression><![CDATA["หน้า " + $V{PAGE_NUMBER} + " จาก"]]></expression></element>
+    <element kind="textField" x="737" y="8" width="33" height="17" fontSize="9" evaluationTime="Report"><expression><![CDATA[$V{PAGE_NUMBER}]]></expression></element>
+  </pageFooter>
+</jasperReport>

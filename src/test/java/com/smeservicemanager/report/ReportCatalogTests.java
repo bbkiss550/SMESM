@@ -18,7 +18,7 @@ class ReportCatalogTests {
     }
     @Test void controllerProvidesOnlyHubMetadata() {
         var model = new ExtendedModelMap();
-        assertEquals("report/index", new ReportController().reports(model));
+        assertEquals("report/index", new ReportController(null, null, null, null, null, null).reports(model));
         assertEquals(Set.of("reportGroups"), model.keySet());
     }
 }

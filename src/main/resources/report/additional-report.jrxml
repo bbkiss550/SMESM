@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport name="AdditionalReport" pageWidth="842" pageHeight="595" orientation="Landscape"
+              columnWidth="770" leftMargin="36" rightMargin="36" topMargin="28" bottomMargin="28"
+              whenNoDataType="AllSectionsNoDetail">
+  <style name="Thai" default="true" fontName="Sarabun" fontSize="11" forecolor="#161616"/>
+  <parameter name="title" class="java.lang.String"/>
+  <parameter name="code" class="java.lang.String"/>
+  <parameter name="companyName" class="java.lang.String"/>
+  <parameter name="companyAddress" class="java.lang.String"/>
+  <parameter name="period" class="java.lang.String"/>
+  <parameter name="dateLabel" class="java.lang.String"/>
+  <parameter name="note" class="java.lang.String"/>
+  <parameter name="generatedAt" class="java.lang.String"/>
+  <parameter name="h1" class="java.lang.String"/><parameter name="h2" class="java.lang.String"/>
+  <parameter name="h3" class="java.lang.String"/><parameter name="h4" class="java.lang.String"/>
+  <parameter name="h5" class="java.lang.String"/><parameter name="h6" class="java.lang.String"/>
+  <parameter name="mLabel1" class="java.lang.String"/><parameter name="mLabel2" class="java.lang.String"/>
+  <parameter name="mLabel3" class="java.lang.String"/><parameter name="mLabel4" class="java.lang.String"/>
+  <parameter name="mValue1" class="java.lang.String"/><parameter name="mValue2" class="java.lang.String"/>
+  <parameter name="mValue3" class="java.lang.String"/><parameter name="mValue4" class="java.lang.String"/>
+  <field name="c1" class="java.lang.String"/><field name="c2" class="java.lang.String"/>
+  <field name="c3" class="java.lang.String"/><field name="c4" class="java.lang.String"/>
+  <field name="c5" class="java.lang.String"/><field name="c6" class="java.lang.String"/>
+  <title height="210">
+    <element kind="textField" x="0" y="0" width="510" height="40" fontSize="27" bold="true"><expression><![CDATA[$P{title}]]></expression></element>
+    <element kind="textField" x="0" y="41" width="490" height="18" fontSize="12"><expression><![CDATA["SME Service Manager  |  " + $P{code} + " REPORT"]]></expression></element>
+    <element kind="textField" x="530" y="3" width="240" height="18" hTextAlign="Right" fontSize="10"><expression><![CDATA[$P{generatedAt}]]></expression></element>
+    <element kind="textField" x="649" y="24" width="86" height="17" hTextAlign="Right" fontSize="10"><expression><![CDATA["หน้า " + $V{PAGE_NUMBER} + " จาก"]]></expression></element>
+    <element kind="textField" x="737" y="24" width="33" height="17" fontSize="10" evaluationTime="Report"><expression><![CDATA[$V{PAGE_NUMBER}]]></expression></element>
+    <element kind="line" x="0" y="65" width="770" height="1" forecolor="#222222"/>
+    <element kind="textField" x="4" y="78" width="360" height="24" fontSize="14" bold="true" textAdjust="ScaleFont"><expression><![CDATA[$P{companyName}]]></expression></element>
+    <element kind="textField" x="4" y="103" width="360" height="38" fontSize="11" textAdjust="ScaleFont"><expression><![CDATA[$P{companyAddress}]]></expression></element>
+    <element kind="line" x="382" y="80" width="1" height="62" forecolor="#919191"/>
+    <element kind="staticText" x="400" y="78" width="360" height="19" fontSize="12" bold="true"><text><![CDATA[ช่วงข้อมูล]]></text></element>
+    <element kind="textField" x="400" y="98" width="360" height="24" fontSize="15" bold="true"><expression><![CDATA[$P{period}]]></expression></element>
+    <element kind="textField" x="400" y="122" width="360" height="18" fontSize="11"><expression><![CDATA["อ้างอิง: " + $P{dateLabel}]]></expression></element>
+    <element kind="line" x="0" y="149" width="770" height="1" forecolor="#222222"/>
+    <element kind="textField" x="0" y="156" width="192" height="19" hTextAlign="Center" bold="true"><expression><![CDATA[$P{mLabel1}]]></expression></element>
+    <element kind="textField" x="193" y="156" width="192" height="19" hTextAlign="Center" bold="true"><expression><![CDATA[$P{mLabel2}]]></expression></element>
+    <element kind="textField" x="386" y="156" width="191" height="19" hTextAlign="Center" bold="true"><expression><![CDATA[$P{mLabel3}]]></expression></element>
+    <element kind="textField" x="578" y="156" width="192" height="19" hTextAlign="Center" bold="true"><expression><![CDATA[$P{mLabel4}]]></expression></element>
+    <element kind="textField" x="0" y="175" width="192" height="29" hTextAlign="Center" fontSize="18" bold="true"><expression><![CDATA[$P{mValue1}]]></expression></element>
+    <element kind="textField" x="193" y="175" width="192" height="29" hTextAlign="Center" fontSize="18" bold="true"><expression><![CDATA[$P{mValue2}]]></expression></element>
+    <element kind="textField" x="386" y="175" width="191" height="29" hTextAlign="Center" fontSize="18" bold="true"><expression><![CDATA[$P{mValue3}]]></expression></element>
+    <element kind="textField" x="578" y="175" width="192" height="29" hTextAlign="Center" fontSize="17" bold="true"><expression><![CDATA[$P{mValue4}]]></expression></element>
+    <element kind="line" x="192" y="156" width="1" height="49" forecolor="#919191"/>
+    <element kind="line" x="385" y="156" width="1" height="49" forecolor="#919191"/>
+    <element kind="line" x="577" y="156" width="1" height="49" forecolor="#919191"/>
+    <element kind="line" x="0" y="208" width="770" height="1" forecolor="#222222"/>
+  </title>
+  <columnHeader height="30">
+    <element kind="rectangle" x="0" y="3" width="770" height="27" mode="Opaque" backcolor="#EFF0F2"/>
+    <element kind="line" x="0" y="29" width="770" height="1" forecolor="#777777"/>
+    <element kind="textField" x="7" y="8" width="103" height="18" bold="true"><expression><![CDATA[$P{h1}]]></expression></element>
+    <element kind="textField" x="117" y="8" width="118" height="18" bold="true"><expression><![CDATA[$P{h2}]]></expression></element>
+    <element kind="textField" x="242" y="8" width="123" height="18" bold="true"><expression><![CDATA[$P{h3}]]></expression></element>
+    <element kind="textField" x="372" y="8" width="125" height="18" bold="true"><expression><![CDATA[$P{h4}]]></expression></element>
+    <element kind="textField" x="504" y="8" width="113" height="18" bold="true"><expression><![CDATA[$P{h5}]]></expression></element>
+    <element kind="textField" x="624" y="8" width="139" height="18" bold="true" hTextAlign="Right"><expression><![CDATA[$P{h6}]]></expression></element>
+  </columnHeader>
+  <detail><band height="25" splitType="Prevent">
+    <element kind="line" x="0" y="24" width="770" height="1" forecolor="#B8B8B8"/>
+    <element kind="textField" x="7" y="3" width="103" height="19" fontSize="11"><expression><![CDATA[$F{c1}]]></expression></element>
+    <element kind="textField" x="117" y="3" width="118" height="19" fontSize="11"><expression><![CDATA[$F{c2}]]></expression></element>
+    <element kind="textField" x="242" y="3" width="123" height="19" fontSize="11"><expression><![CDATA[$F{c3}]]></expression></element>
+    <element kind="textField" x="372" y="3" width="125" height="19" fontSize="11"><expression><![CDATA[$F{c4}]]></expression></element>
+    <element kind="textField" x="504" y="3" width="113" height="19" fontSize="11"><expression><![CDATA[$F{c5}]]></expression></element>
+    <element kind="textField" x="624" y="3" width="139" height="19" fontSize="11" hTextAlign="Right"><expression><![CDATA[$F{c6}]]></expression></element>
+  </band></detail>
+  <pageFooter height="28">
+    <element kind="line" x="0" y="2" width="770" height="1" forecolor="#222222"/>
+    <element kind="textField" x="0" y="8" width="620" height="17" fontSize="9"><expression><![CDATA[$P{note}]]></expression></element>
+    <element kind="textField" x="649" y="8" width="86" height="17" hTextAlign="Right" fontSize="9"><expression><![CDATA["หน้า " + $V{PAGE_NUMBER} + " จาก"]]></expression></element>
+    <element kind="textField" x="737" y="8" width="33" height="17" fontSize="9" evaluationTime="Report"><expression><![CDATA[$V{PAGE_NUMBER}]]></expression></element>
+  </pageFooter>
+</jasperReport>
