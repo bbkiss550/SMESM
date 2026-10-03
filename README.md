@@ -7,6 +7,10 @@
 - เริ่ม UAT จาก PowerShell ด้วย `./mvnw.cmd -Dspring-boot.run.profiles=uat spring-boot:run`
 - UAT ไม่สั่ง Flyway อัตโนมัติ ต้องเตรียมโครงสร้างฐานข้อมูลและบัญชีผู้ใช้ก่อนเปิดแอป
 
+### Deploy UAT บน Render
+
+ในหน้า Environment ของ Web Service ตั้ง `SPRING_PROFILES_ACTIVE=uat`, `UAT_DB_URL`, `UAT_DB_USERNAME` และ `UAT_DB_PASSWORD` ให้ตรงกับฐาน Neon โดยใส่รหัสผ่านเฉพาะใน Render Environment เท่านั้น ไม่ต้องอัปโหลด `.env.uat` หรือ commit รหัสผ่านลง Git ค่า `UAT_DB_URL` เป็น JDBC URL ของฐาน UAT และไม่ต้องมี user/password อยู่ใน URL แอปอ่านพอร์ตจาก `PORT` ที่ Render กำหนดให้ หากฐาน UAT ยังไม่มี schema แอปจะเริ่มไม่สำเร็จเพราะ Hibernate ตรวจโครงสร้างฐานข้อมูลตอนเริ่มต้น
+
 ระบบบริหารงานบริการสำหรับ SME ครอบคลุมลูกค้า ใบงาน ตารางนัดหมาย หัวหน้าช่าง สินค้าและสต๊อก การชำระเงิน การคืนเงิน ใบเสร็จ และรายงาน โดยส่วนติดต่อผู้ใช้งานเป็นภาษาไทย
 
 ## เทคโนโลยี
